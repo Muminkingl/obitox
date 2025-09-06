@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { FormError } from '@/lib/utils';
 import { z } from 'zod';
 import { Resend } from 'resend';
@@ -65,6 +66,7 @@ export async function signup(prevState: any, formData: FormData) {
   }
 
   const supabase = await createClient();
+  const adminSupabase = createAdminClient();
   
   // Validate form data
   const validatedFields = signupSchema.safeParse(
@@ -81,6 +83,32 @@ export async function signup(prevState: any, formData: FormData) {
   const { email, password, firstname, lastname } = validatedFields.data;
   
   try {
+    // First, check if user already exists in auth.users using the database function
+    const { data: emailExists, error: checkError } = await supabase
+      .rpc('email_exists_in_auth', { email_to_check: email });
+    
+    if (checkError) {
+      console.error('Error checking existing user:', checkError);
+      // Fallback: try to sign in with the email to check if it exists
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password: 'dummy_password_to_check_existence'
+      });
+      
+      // If sign in fails with "Invalid login credentials", the user exists
+      if (signInError && signInError.message.includes('Invalid login credentials')) {
+        return {
+          type: 'error',
+          message: 'This email is already registered. If you signed up with Google, please use the Google login button instead.'
+        };
+      }
+    } else if (emailExists) {
+      return {
+        type: 'error',
+        message: 'This email is already registered. If you signed up with Google, please use the Google login button instead.'
+      };
+    }
+
     // Check if there's a pending user with this email first
     const { data: existingPendingUser } = await supabase
       .from('pending_users')
@@ -100,7 +128,6 @@ export async function signup(prevState: any, formData: FormData) {
     const otp = generateOTP();
     
     // Try to insert into pending_users table
-    // If this fails due to existing user (from database constraints), we'll handle it
     const { data, error } = await supabase
       .from('pending_users')
       .insert({
