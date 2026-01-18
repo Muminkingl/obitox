@@ -2,6 +2,12 @@ import SimplePricing from "@/components/pricing";
 import FAQsFour from "@/components/faq";
 import { HeroHeader } from "@/components/header";
 import FooterSection from "@/components/footer";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Pricing - ObitoX",
+  description: "Simple, transparent pricing for ObitoX API management. Start free, upgrade as you grow."
+};
 
 export default function PricingPage() {
   return (

@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import {
+  IconBell,
   IconCamera,
   IconChartBar,
   IconDashboard,
@@ -16,9 +17,8 @@ import {
   IconListDetails,
   IconReport,
   IconSearch,
-  IconSettings,
+  IconCreditCard,
   IconUsers,
-  IconWorld,
 } from "@tabler/icons-react"
 
 import { NavDocuments } from "@/components/nav-documents"
@@ -32,6 +32,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { useUnreadAuditCount } from "@/hooks/useUnreadAuditCount"
+import { useAppearance } from "@/contexts/appearance-context"
+import { cn } from "@/lib/utils"
 
 const data = {
   navClouds: [
@@ -82,16 +85,22 @@ const data = {
       ],
     },
   ],
-  documents: [
+}
+
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { count } = useUnreadAuditCount();
+  const { transparentSidebar, isLoaded } = useAppearance();
+
+  // Red dot badge for unread notifications
+  const RedDotBadge = count > 0 ? (
+    <div className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-red-500 border border-white dark:border-zinc-900" />
+  ) : null;
+
+  const documents = [
     {
       name: "Usage",
       url: "/dashboard/usage",
       icon: IconChartBar,
-    },
-    {
-      name: "Domains",
-      url: "/dashboard/domains",
-      icon: IconWorld,
     },
     {
       name: "API Keys",
@@ -99,16 +108,23 @@ const data = {
       icon: IconKey,
     },
     {
-      name: "Settings",
-      url: "#",
-      icon: IconSettings,
+      name: "Logs",
+      url: "/dashboard/audit",
+      icon: IconFileDescription,
     },
-  ],
-}
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+
+  ];
+
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
+    <Sidebar
+      collapsible="offcanvas"
+      {...props}
+      className={cn(
+        "transition-colors duration-300",
+        isLoaded && transparentSidebar && "bg-transparent backdrop-blur-xl border-r border-border/50"
+      )}
+    >
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -117,15 +133,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
               <a href="#">
-                <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Acme Inc.</span>
+                <img src="/obitoX.png" alt="ObitoX" className="!size-7" />
+                <span className="text-base font-semibold">ObitoX</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavDocuments items={data.documents} />
+        <NavDocuments items={documents} />
       </SidebarContent>
       <SidebarFooter>
         <UserProfile />

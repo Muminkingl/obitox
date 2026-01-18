@@ -7,28 +7,28 @@ export default function FAQsFour() {
     const faqItems = [
         {
             id: 'item-1',
-            question: 'Can I change my plan anytime?',
-            answer: 'Yes, you can upgrade, downgrade, or cancel your plan at any time from your account dashboard. Changes will be reflected in the next billing cycle.',
+            question: 'Is ObitoX production-ready?',
+            answer: 'Yes. Pro and Enterprise plans are designed for production workloads, with JWT auth, abuse detection, and SLA-backed infrastructure. We focus on being the rock-solid orchestration layer for your mission-critical uploads.',
         },
         {
             id: 'item-2',
-            question: 'What happens if I exceed my monthly API calls?',
-            answer: "If you exceed your plan's API call limit, we offer pay-as-you-go pricing for additional calls. Alternatively, you can upgrade to a higher plan with more included calls.",
+            question: 'Do you store my files?',
+            answer: 'No. Your files stay in your own storage provider (R2, S3, Supabase). ObitoX only manages access, security, and APIs. This means you have zero vendor lock-in and total control over your data assets.',
         },
         {
             id: 'item-3',
-            question: 'Is there a free trial available?',
-            answer: 'Yes, our Monthly Plan includes a 14-day free trial for you to test out our platform.',
+            question: 'Why is ObitoX more cost-efficient than traditional providers?',
+            answer: 'Because we don’t charge for storage or bandwidth markups. You pay only for our orchestration and security layer—the actual file transfer happens directly with your own storage provider at cost.',
         },
         {
             id: 'item-4',
-            question: 'What kind of support do you offer?',
-            answer: "We offer email support for all plans. Pro and Enterprise customers have access to priority support with faster response times.",
+            question: 'What happens if I exceed my plan limits?',
+            answer: 'Transparency is key. We’ll notify you before limits are reached. You can upgrade instantly to maintain throughput or continue on the Free plan with temporary rate limits—no surprise charges, ever.',
         },
         {
             id: 'item-5',
-            question: 'Do you offer discounts for non-profits or students?',
-            answer: 'Yes, we offer special discounts for non-profit organizations and educational institutions. Please contact our support team for more information.',
+            question: 'Can I cancel or change plans anytime?',
+            answer: 'Yes. You can upgrade, downgrade, or cancel directly from your dashboard at any time. No long-term contracts, no hidden fees, and no friction to scale as you grow.',
         },
     ]
 

@@ -2,19 +2,22 @@
 
 import { useId, useState } from 'react'
 import { CircleAlertIcon, Loader2 } from 'lucide-react'
-import { useToast } from '@/components/toast-provider'
 import { Button } from '@/components/ui/button'
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { toast } from 'sonner'
+import { Alert, AlertIcon, AlertTitle } from '@/components/ui/alert'
+import { RiCheckboxCircleFill, RiErrorWarningFill } from '@remixicon/react'
 
 interface DeleteApiKeyDialogProps {
   apiKeyName: string;
@@ -25,7 +28,6 @@ interface DeleteApiKeyDialogProps {
 
 export default function DeleteApiKeyDialog({ apiKeyName, onDelete, isOpen, onOpenChange }: DeleteApiKeyDialogProps) {
   const id = useId()
-  const { addToast } = useToast()
   const [inputValue, setInputValue] = useState('')
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -37,24 +39,42 @@ export default function DeleteApiKeyDialog({ apiKeyName, onDelete, isOpen, onOpe
         if (success) {
           onOpenChange(false);
           setInputValue('');
-          addToast({
-            type: "success",
-            message: "API key deleted successfully",
-            duration: 3000
-          });
+          toast.custom(
+            (t) => (
+              <Alert variant="mono" icon="success" onClose={() => toast.dismiss(t)}>
+                <AlertIcon>
+                  <RiCheckboxCircleFill className="text-green-500" />
+                </AlertIcon>
+                <AlertTitle>API key deleted successfully</AlertTitle>
+              </Alert>
+            ),
+            { duration: 4000 }
+          );
         } else {
-          addToast({
-            type: "error",
-            message: "Failed to delete API key",
-            duration: 3000
-          });
+          toast.custom(
+            (t) => (
+              <Alert variant="mono" icon="destructive" onClose={() => toast.dismiss(t)}>
+                <AlertIcon>
+                  <RiErrorWarningFill className="text-red-500" />
+                </AlertIcon>
+                <AlertTitle>Failed to delete API key</AlertTitle>
+              </Alert>
+            ),
+            { duration: 4000 }
+          );
         }
       } catch (error) {
-        addToast({
-          type: "error",
-          message: "An error occurred while deleting the API key",
-          duration: 3000
-        });
+        toast.custom(
+          (t) => (
+            <Alert variant="mono" icon="destructive" onClose={() => toast.dismiss(t)}>
+              <AlertIcon>
+                <RiErrorWarningFill className="text-red-500" />
+              </AlertIcon>
+              <AlertTitle>An error occurred while deleting the API key</AlertTitle>
+            </Alert>
+          ),
+          { duration: 4000 }
+        );
       } finally {
         setIsDeleting(false);
       }
@@ -62,27 +82,27 @@ export default function DeleteApiKeyDialog({ apiKeyName, onDelete, isOpen, onOpe
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
+    <AlertDialog open={isOpen} onOpenChange={(open) => {
       if (!open) setInputValue('');
       onOpenChange(open);
     }}>
-      <DialogContent>
+      <AlertDialogContent>
         <div className="flex flex-col items-center gap-2">
           <div
-            className="flex size-9 shrink-0 items-center justify-center rounded-full border"
+            className="flex size-9 shrink-0 items-center justify-center rounded-full border border-red-500/20 bg-red-500/10"
             aria-hidden="true"
           >
             <CircleAlertIcon className="text-red-500 opacity-80" size={16} />
           </div>
-          <DialogHeader>
-            <DialogTitle className="sm:text-center">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="sm:text-center">
               Final confirmation
-            </DialogTitle>
-            <DialogDescription className="sm:text-center">
+            </AlertDialogTitle>
+            <AlertDialogDescription className="sm:text-center">
               This action cannot be undone. To confirm, please enter the API key
-              name <span className="text-primary">{apiKeyName}</span>.
-            </DialogDescription>
-          </DialogHeader>
+              name <span className="text-white font-medium">{apiKeyName}</span>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
         </div>
 
         <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); handleDelete(); }}>
@@ -94,14 +114,15 @@ export default function DeleteApiKeyDialog({ apiKeyName, onDelete, isOpen, onOpe
               placeholder={`Type ${apiKeyName} to confirm`}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
+              className="bg-zinc-950 border-zinc-800"
             />
           </div>
-          <DialogFooter>
-            <DialogClose asChild>
+          <AlertDialogFooter className="flex items-center gap-2">
+            <AlertDialogCancel asChild>
               <Button type="button" variant="outline" className="flex-1">
                 Cancel
               </Button>
-            </DialogClose>
+            </AlertDialogCancel>
             <Button
               type="submit"
               variant="destructive"
@@ -114,12 +135,12 @@ export default function DeleteApiKeyDialog({ apiKeyName, onDelete, isOpen, onOpe
                   Deleting...
                 </>
               ) : (
-                "Delete"
+                "Delete API Key"
               )}
             </Button>
-          </DialogFooter>
+          </AlertDialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }

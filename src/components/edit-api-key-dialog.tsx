@@ -1,19 +1,21 @@
 'use client'
 
 import { useState } from 'react'
-import { Loader2, Pencil, Edit } from 'lucide-react'
-import { useToast } from '@/components/toast-provider'
+import { Loader2, Edit } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
+import { Alert, AlertIcon, AlertTitle } from '@/components/ui/alert'
+import { RiCheckboxCircleFill, RiErrorWarningFill } from '@remixicon/react'
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
@@ -26,7 +28,6 @@ interface EditApiKeyDialogProps {
 }
 
 export default function EditApiKeyDialog({ apiKey, onEdit }: EditApiKeyDialogProps) {
-  const { addToast } = useToast()
   const [isOpen, setIsOpen] = useState(false)
   const [name, setName] = useState(apiKey.name)
   const [isLoading, setIsLoading] = useState(false)
@@ -34,68 +35,99 @@ export default function EditApiKeyDialog({ apiKey, onEdit }: EditApiKeyDialogPro
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (name.trim() === apiKey.name) {
       setIsOpen(false)
       return
     }
-    
+
     if (!name.trim()) {
-      setError('API key name cannot be empty')
+      toast.custom(
+        (t) => (
+          <Alert variant="mono" icon="destructive" onClose={() => toast.dismiss(t)}>
+            <AlertIcon>
+              <RiErrorWarningFill className="text-red-500" />
+            </AlertIcon>
+            <AlertTitle>API key name cannot be empty</AlertTitle>
+          </Alert>
+        ),
+        { duration: 4000 }
+      );
       return
     }
-    
+
     setIsLoading(true)
     setError(null)
-    
+
     try {
       const success = await onEdit(apiKey.id, name.trim())
-      
+
       if (success) {
         setIsOpen(false)
-        addToast({
-          type: 'success',
-          message: 'API key name updated successfully',
-          duration: 3000,
-        })
+        toast.custom(
+          (t) => (
+            <Alert variant="mono" icon="success" onClose={() => toast.dismiss(t)}>
+              <AlertIcon>
+                <RiCheckboxCircleFill className="text-green-500" />
+              </AlertIcon>
+              <AlertTitle>API key name updated successfully</AlertTitle>
+            </Alert>
+          ),
+          { duration: 4000 }
+        );
       } else {
-        setError('Failed to update API key name')
+        toast.custom(
+          (t) => (
+            <Alert variant="mono" icon="destructive" onClose={() => toast.dismiss(t)}>
+              <AlertIcon>
+                <RiErrorWarningFill className="text-red-500" />
+              </AlertIcon>
+              <AlertTitle>Failed to update API key name</AlertTitle>
+            </Alert>
+          ),
+          { duration: 4000 }
+        );
       }
     } catch (err: any) {
-      setError(err.message || 'An error occurred')
+      toast.custom(
+        (t) => (
+          <Alert variant="mono" icon="destructive" onClose={() => toast.dismiss(t)}>
+            <AlertIcon>
+              <RiErrorWarningFill className="text-red-500" />
+            </AlertIcon>
+            <AlertTitle>{err.message || 'An error occurred'}</AlertTitle>
+          </Alert>
+        ),
+        { duration: 4000 }
+      );
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
+    <AlertDialog open={isOpen} onOpenChange={(open) => {
       if (open) {
         setName(apiKey.name)
         setError(null)
       }
       setIsOpen(open)
     }}>
-      <DialogTrigger asChild>
+      <AlertDialogTrigger asChild>
         <div className="flex items-center px-2 py-1.5 text-sm w-full">
           <Edit className="mr-2 h-4 w-4" />
           Edit
         </div>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Edit API Key</DialogTitle>
-          <DialogDescription>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Edit API Key</AlertDialogTitle>
+          <AlertDialogDescription>
             Change the name of your API key.
-          </DialogDescription>
-        </DialogHeader>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-md mb-4">
-              {error}
-            </div>
-          )}
           <div className="space-y-2">
             <Label htmlFor="api-key-name">Name</Label>
             <Input
@@ -107,14 +139,14 @@ export default function EditApiKeyDialog({ apiKey, onEdit }: EditApiKeyDialogPro
               disabled={isLoading}
             />
           </div>
-          <DialogFooter>
-            <DialogClose asChild>
+          <AlertDialogFooter>
+            <AlertDialogCancel asChild>
               <Button type="button" variant="outline">
                 Cancel
               </Button>
-            </DialogClose>
-            <Button 
-              type="submit" 
+            </AlertDialogCancel>
+            <Button
+              type="submit"
               disabled={isLoading || !name.trim() || name.trim() === apiKey.name}
             >
               {isLoading ? (
@@ -126,9 +158,9 @@ export default function EditApiKeyDialog({ apiKey, onEdit }: EditApiKeyDialogPro
                 "Save Changes"
               )}
             </Button>
-          </DialogFooter>
+          </AlertDialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }

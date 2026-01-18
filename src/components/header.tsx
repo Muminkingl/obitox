@@ -1,30 +1,95 @@
 'use client'
 import Link from 'next/link'
-import { Logo } from '@/components/icons/logo'
+import { Logo } from '@/components/logo'
 import { Menu, X } from 'lucide-react'
-import React, { useState, useEffect } from 'react'
+import { Button } from '@/components/ui/button'
+import React from 'react'
 import { cn } from '@/lib/utils'
-import { ModeToggle } from './mode-toggle'
-import { AuthSection } from './header-auth'
+
+import { createClient } from '@/lib/supabase/client'
+import {
+    Avatar,
+    AvatarFallback,
+    AvatarImage,
+} from "@/components/ui/avatar"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { User, LogOut, LayoutDashboard } from 'lucide-react'
+import { logout } from "@/app/(auth)/logout/action"
 
 const menuItems = [
-    { name: 'Features', href: '#link' },
-    { name: 'Solution', href: '#link' },
+    { name: 'Features', href: '#features' },
+    { name: 'Solution', href: '#solution' },
     { name: 'Pricing', href: '/pricing' },
     { name: 'About', href: '#link' },
 ]
 
 export const HeroHeader = () => {
-    const [menuState, setMenuState] = useState(false)
-    const [isScrolled, setIsScrolled] = useState(false)
+    const [menuState, setMenuState] = React.useState(false)
+    const [isScrolled, setIsScrolled] = React.useState(false)
+    const [user, setUser] = React.useState<any>(null)
+    const [loading, setLoading] = React.useState(true)
 
-    useEffect(() => {
+    React.useEffect(() => {
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 50)
         }
         window.addEventListener('scroll', handleScroll)
+
+        const checkUser = async () => {
+            const supabase = createClient()
+            const { data: { user } } = await supabase.auth.getUser()
+            setUser(user)
+            setLoading(false)
+        }
+        checkUser()
+
         return () => window.removeEventListener('scroll', handleScroll)
     }, [])
+
+    const UserMenu = ({ user }: { user: any }) => (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0">
+                    <Avatar className="h-8 w-8">
+                        <AvatarImage src={user.user_metadata?.avatar_url} alt={user.email} />
+                        <AvatarFallback>{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">{user.user_metadata?.full_name || 'User'}</p>
+                        <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                    </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                    <Link href="/dashboard" className="flex w-full items-center">
+                        <LayoutDashboard className="mr-2 h-4 w-4" />
+                        <span>Dashboard</span>
+                    </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                    <form action={logout} className="w-full">
+                        <button className="flex w-full items-center text-destructive">
+                            <LogOut className="mr-2 h-4 w-4" />
+                            <span>Log out</span>
+                        </button>
+                    </form>
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    )
 
     return (
         <header>
@@ -78,11 +143,40 @@ export const HeroHeader = () => {
                                     ))}
                                 </ul>
                             </div>
-                            <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
-                                <div className="flex items-center">
-                                    <AuthSection />
-                                    <ModeToggle />
-                                </div>
+                            <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit items-center">
+                                {!loading && (
+                                    user ? (
+                                        <UserMenu user={user} />
+                                    ) : (
+                                        <>
+                                            <Button
+                                                asChild
+                                                variant="outline"
+                                                size="sm"
+                                                className={cn(isScrolled && 'lg:hidden')}>
+                                                <Link href="/login">
+                                                    <span>Login</span>
+                                                </Link>
+                                            </Button>
+                                            <Button
+                                                asChild
+                                                size="sm"
+                                                className={cn(isScrolled && 'lg:hidden')}>
+                                                <Link href="/signup">
+                                                    <span>Sign Up</span>
+                                                </Link>
+                                            </Button>
+                                            <Button
+                                                asChild
+                                                size="sm"
+                                                className={cn(isScrolled ? 'lg:inline-flex' : 'hidden')}>
+                                                <Link href="/signup">
+                                                    <span>Get Started</span>
+                                                </Link>
+                                            </Button>
+                                        </>
+                                    )
+                                )}
                             </div>
                         </div>
                     </div>

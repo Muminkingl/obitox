@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { getRemainingApiKeys, getApiKeyLimit } from '@/lib/subscription';
 import crypto from 'crypto';
+import { apiRateLimit } from '@/lib/rate-limit';
 
 // Helper function for request validation
 async function validateRequest(supabase: any) {
@@ -27,7 +28,7 @@ function createResponse(success: boolean, data?: any, message?: string, status: 
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   response.headers.set('Content-Security-Policy', "default-src 'self'");
   response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
-  
+
   return response;
 }
 
@@ -81,7 +82,7 @@ export async function GET(request: NextRequest) {
 
     try {
       limit = await getApiKeyLimit(user.id);
-      
+
       // Validate limit is a positive number
       if (typeof limit !== 'number' || limit < 0 || !Number.isInteger(limit)) {
         throw new Error('Invalid API key limit returned');
@@ -92,7 +93,7 @@ export async function GET(request: NextRequest) {
 
     try {
       remaining = await getRemainingApiKeys(user.id);
-      
+
       // Validate remaining is a non-negative number
       if (typeof remaining !== 'number' || remaining < 0 || !Number.isInteger(remaining)) {
         throw new Error('Invalid remaining API keys count returned');
@@ -126,16 +127,16 @@ export async function GET(request: NextRequest) {
       if (error.message === 'Unauthorized') {
         return createErrorResponse('Unauthorized', 401);
       }
-      
+
       if (error.message.includes('Invalid user')) {
         return createErrorResponse('Invalid user authentication', 400);
       }
-      
+
       if (error.message.includes('timeout') || error.message.includes('ETIMEDOUT')) {
         return createErrorResponse('Service temporarily unavailable', 503);
       }
     }
-    
+
     return createErrorResponse('Internal server error', 500);
   }
 }
@@ -143,17 +144,17 @@ export async function GET(request: NextRequest) {
 // OPTIONS method for CORS preflight (if needed)
 export async function OPTIONS(request: NextRequest) {
   const response = new NextResponse(null, { status: 200 });
-  
+
   // Add CORS headers if needed
   response.headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
   response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   response.headers.set('Access-Control-Max-Age', '86400');
-  
+
   // Add security headers
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('X-Frame-Options', 'DENY');
   response.headers.set('X-XSS-Protection', '1; mode=block');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  
+
   return response;
 }

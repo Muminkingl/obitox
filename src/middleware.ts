@@ -7,7 +7,7 @@ export async function middleware(request: NextRequest) {
   try {
     // Check if the user is authenticated
     const { data: { session } } = await supabase.auth.getSession();
-    
+
     // If user is not authenticated and trying to access dashboard routes
     if (!session && request.nextUrl.pathname.startsWith('/dashboard')) {
       // Redirect to login page
@@ -18,8 +18,8 @@ export async function middleware(request: NextRequest) {
     // If user is authenticated and trying to access auth pages
     if (session) {
       if (
-        request.nextUrl.pathname === '/login' || 
-        request.nextUrl.pathname === '/signup' || 
+        request.nextUrl.pathname === '/login' ||
+        request.nextUrl.pathname === '/signup' ||
         request.nextUrl.pathname === '/otp'
       ) {
         // Redirect to dashboard
@@ -29,6 +29,17 @@ export async function middleware(request: NextRequest) {
     }
   } catch (error) {
     console.error('Error in middleware:', error);
+  }
+
+  // Maintenance Mode
+  const MAINTENANCE_PATHS = [
+    '/dashboard/settings/team',
+  ];
+
+  if (MAINTENANCE_PATHS.some((path) => request.nextUrl.pathname.startsWith(path))) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/maintenance';
+    return NextResponse.rewrite(url);
   }
 
   return response;

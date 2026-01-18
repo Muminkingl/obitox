@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+import { apiRateLimit } from '@/lib/rate-limit';
 
 // Default usage data
 const defaultCurrentUsage = {
@@ -12,21 +13,47 @@ const defaultCurrentUsage = {
 };
 
 export async function GET(request: NextRequest) {
+  const startTime = Date.now();
+
   try {
+    // 1. Rate limiting (100 requests per minute)
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+      request.headers.get('x-real-ip') ||
+      '::1';
+
+    const rateLimitResult = await apiRateLimit.check(ip);
+
+    if (!rateLimitResult.success) {
+      const retryAfter = Math.ceil((rateLimitResult.reset - Date.now()) / 1000);
+
+      console.log(`[USAGE HISTORY] ❌ Rate limited IP: ${ip}`);
+
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.', retryAfter },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(retryAfter),
+            'X-RateLimit-Remaining': '0'
+          }
+        }
+      );
+    }
+
     const supabase = await createClient();
     const { searchParams } = new URL(request.url);
-    
+
     // Get query parameters
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
     const providers = searchParams.get('providers')?.split(',').filter(Boolean) || null;
     const fileTypes = searchParams.get('fileTypes')?.split(',').filter(Boolean) || null;
-    
+
     // Usage parameters
-    
+
     // Get the current user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
-    
+
     if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -34,7 +61,7 @@ export async function GET(request: NextRequest) {
     // Get the user's API keys
     const { data: apiKeys, error: apiKeysError } = await supabase
       .from('api_keys')
-      .select('*')
+      .select('id, name, key_value, created_at')
       .eq('user_id', user.id);
 
     if (apiKeysError) {
@@ -43,11 +70,12 @@ export async function GET(request: NextRequest) {
     }
 
     if (!apiKeys || apiKeys.length === 0) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         monthlyData: [],
         providerBreakdown: [],
         fileTypeBreakdown: [],
-        currentUsage: defaultCurrentUsage
+        currentUsage: defaultCurrentUsage,
+        usageByKey: []
       });
     }
 
@@ -79,101 +107,179 @@ export async function GET(request: NextRequest) {
 
     const { data: fileUploads, error: uploadsError } = await fileUploadsQuery;
 
+    // Fetch API usage logs for accurate request counts using user_id to include deleted keys
+    const { data: usageLogs, error: logsError } = await supabase
+      .from('api_usage_logs')
+      .select('api_key_id, request_count, success, created_at')
+      .eq('user_id', user.id)
+      .gte('created_at', start.toISOString())
+      .lte('created_at', end.toISOString());
+
+
+
     if (uploadsError) {
       console.error('Error fetching file uploads:', uploadsError);
       return NextResponse.json({ error: 'Failed to fetch file uploads' }, { status: 500 });
     }
 
-
-    // If no uploads found, return empty data
-    if (!fileUploads || fileUploads.length === 0) {
-      return NextResponse.json({
-        monthlyData: [],
-        providerBreakdown: [],
-        fileTypeBreakdown: [],
-        currentUsage: defaultCurrentUsage
-      });
+    if (logsError) {
+      console.error('Error fetching usage logs:', logsError);
+      // We don't fail essentially, just log it. Or maybe we should?
+      // Let's continue but logs will be empty
     }
 
-     // Get provider breakdown from file uploads
-     // Always include all providers even if there are no uploads in the date range
-     const allProviders = ['supabase', 'uploadcare', 'vercel'];
-     const providerBreakdown = fileUploads.length > 0 
-       ? getProviderBreakdown(fileUploads) 
-       : allProviders.map(provider => ({
-           id: provider,
-           label: getProviderLabel(provider),
-           value: provider,
-           percentage: 0,
-           detail: '0',
-           count: 0,
-           totalFileSize: 0,
-           averageFileSize: 0,
-           successRate: 0,
-           lastUsedAt: null
-         }));
+    const activeUsageLogs = usageLogs || [];
 
-     // Get file type breakdown from file uploads
-     // Always include common file types even if they're not in the current uploads
-     // First get actual file types from uploads
-     const uploadedFileTypes = fileUploads.length > 0
-       ? [...new Set(fileUploads.map(upload => upload.file_type))]
-       : [];
-     
-     // Add default file types if they don't exist in uploads
-     const defaultFileTypes = ['image/jpeg', 'application/pdf', 'text/plain', 'video/mp4'];
-     const allFileTypes = [...new Set([...uploadedFileTypes, ...defaultFileTypes])];
-     
-     // Get file type breakdown with actual data
-     const actualFileTypeBreakdown = getFileTypeBreakdown(fileUploads);
-     
-     // Make sure all default file types are included
-     const fileTypeBreakdown = allFileTypes.map(fileType => {
-       const existing = actualFileTypeBreakdown.find(ft => ft.id === fileType);
-       if (existing) return existing;
-       
-       return {
-         id: fileType,
-         label: getFileTypeLabel(fileType),
-         value: fileType,
-         percentage: 0,
-         detail: '0',
-         count: 0,
-         totalFileSize: 0,
-         averageFileSize: 0,
-         lastUsedAt: null
-       };
-     });
+
+    // If no uploads found, we still proceed to calculate usageByKey
+    const activeFileUploads = fileUploads || [];
+
+    // Get provider breakdown from file uploads
+    // Always include all providers even if there are no uploads in the date range
+    const allProviders = ['supabase', 'uploadcare', 'vercel'];
+    const providerBreakdown = activeFileUploads.length > 0
+      ? getProviderBreakdown(activeFileUploads)
+      : allProviders.map(provider => ({
+        id: provider,
+        label: getProviderLabel(provider),
+        value: provider,
+        percentage: 0,
+        detail: '0',
+        count: 0,
+        totalFileSize: 0,
+        averageFileSize: 0,
+        successRate: 0,
+        lastUsedAt: null
+      }));
+
+    // Get file type breakdown from file uploads
+    // Always include common file types even if they're not in the current uploads
+    // First get actual file types from uploads
+    const uploadedFileTypes = activeFileUploads.length > 0
+      ? [...new Set(activeFileUploads.map((upload: any) => upload.file_type))]
+      : [];
+
+    // Add default file types if they don't exist in uploads
+    const defaultFileTypes = ['image/jpeg', 'application/pdf', 'text/plain', 'video/mp4'];
+    const allFileTypes = [...new Set([...uploadedFileTypes, ...defaultFileTypes])];
+
+    // Get file type breakdown with actual data
+    const actualFileTypeBreakdown = getFileTypeBreakdown(activeFileUploads);
+
+    // Make sure all default file types are included
+    const fileTypeBreakdown = allFileTypes.map(fileType => {
+      const existing = actualFileTypeBreakdown.find(ft => ft.id === fileType);
+      if (existing) return existing;
+
+      return {
+        id: fileType,
+        label: getFileTypeLabel(fileType),
+        value: fileType,
+        percentage: 0,
+        detail: '0',
+        count: 0,
+        totalFileSize: 0,
+        averageFileSize: 0,
+        lastUsedAt: null
+      };
+    });
 
     // Generate monthly data from file uploads
     // Always generate monthly data points even if there are no uploads
-    const monthlyData = generateMonthlyDataFromUploads(fileUploads, start, end);
+    // Generate monthly data from file uploads and logs
+    // Always generate monthly data points
+    const monthlyData = generateMonthlyData(activeFileUploads, activeUsageLogs, start, end);
 
     // Calculate current usage from all file uploads (not just filtered ones)
     // Get all file uploads for current usage calculation
     const { data: allUploads, error: allUploadsError } = await supabase
       .from('file_uploads')
-      .select('file_size, upload_status, uploaded_at')
+      .select('file_size, upload_status, uploaded_at, api_key_id')
       .in('api_key_id', apiKeyIds);
 
+    // Calculate current usage from API usage logs (for requests) and file uploads (for storage)
+    // Get all usage logs for accurate request accounting - using user_id to capture deleted keys
+    const { data: allLogs, error: allLogsError } = await supabase
+      .from('api_usage_logs')
+      .select('api_key_id, request_count, success, created_at')
+      .eq('user_id', user.id);
+
+    const activeAllLogs = allLogs || [];
+
     const currentUsage = {
-      totalRequests: allUploads?.length || 0,
-      successfulRequests: allUploads?.filter(upload => upload.upload_status === 'success').length || 0,
-      failedRequests: allUploads?.filter(upload => upload.upload_status !== 'success').length || 0,
+      totalRequests: activeAllLogs.reduce((sum, log) => sum + (log.request_count || 1), 0),
+      successfulRequests: activeAllLogs.filter(log => log.success).reduce((sum, log) => sum + (log.request_count || 1), 0),
+      failedRequests: activeAllLogs.filter(log => !log.success).reduce((sum, log) => sum + (log.request_count || 1), 0),
+
+      // File metrics still come from file_uploads
       totalFileSize: allUploads?.reduce((sum, upload) => sum + (upload.file_size || 0), 0) || 0,
       totalFilesUploaded: allUploads?.length || 0,
-      lastUsedAt: allUploads && allUploads.length > 0 
-        ? allUploads.sort((a, b) => new Date(b.uploaded_at).getTime() - new Date(a.uploaded_at).getTime())[0].uploaded_at
+
+      lastUsedAt: activeAllLogs.length > 0
+        ? activeAllLogs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0].created_at
         : null
     };
 
 
-    return NextResponse.json({
-      monthlyData,
-      providerBreakdown,
-      fileTypeBreakdown,
-      currentUsage
+    // Calculate usage by API key
+    // Calculate usage by API key using proper logs
+    // First map active keys
+    const usageByKey = apiKeys.map(key => {
+      const keyLogs = activeAllLogs.filter(l => l.api_key_id === key.id);
+
+      // Calculate total requests for this key
+      const totalRequests = keyLogs.reduce((sum, log) => sum + (log.request_count || 1), 0);
+
+      return {
+        id: key.id,
+        name: key.name,
+        key_value: key.key_value,
+        usage: totalRequests,
+        last_used_at: keyLogs.length > 0
+          ? [...keyLogs].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0].created_at
+          : null
+      };
     });
+
+    // Identify logs from deleted keys and group them
+    const activeKeyIds = new Set(apiKeys.map(k => k.id));
+    const deletedKeyLogs = activeAllLogs.filter(l => !activeKeyIds.has(l.api_key_id));
+
+    if (deletedKeyLogs.length > 0) {
+      const deletedUsage = deletedKeyLogs.reduce((sum, log) => sum + (log.request_count || 1), 0);
+      const lastUsed = deletedKeyLogs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0].created_at;
+
+      usageByKey.push({
+        id: 'deleted-keys',
+        name: 'Deleted Keys',
+        key_value: '...................',
+        usage: deletedUsage,
+        last_used_at: lastUsed
+      });
+    }
+
+    usageByKey.sort((a, b) => b.usage - a.usage);
+
+    const processingTime = Date.now() - startTime;
+
+    // 2. Return with Cache-Control headers
+    return NextResponse.json(
+      {
+        monthlyData,
+        providerBreakdown,
+        fileTypeBreakdown,
+        currentUsage,
+        usageByKey
+      },
+      {
+        headers: {
+          // Cache for 60 seconds, allow stale for 2 minutes
+          'Cache-Control': 'private, max-age=60, stale-while-revalidate=120',
+          'X-RateLimit-Remaining': String(rateLimitResult.remaining),
+          'X-Response-Time': `${processingTime}ms`
+        }
+      }
+    );
 
   } catch (error) {
     console.error('Error in usage history API:', error);
@@ -184,7 +290,7 @@ export async function GET(request: NextRequest) {
 // Helper function to get provider breakdown from file uploads
 function getProviderBreakdown(fileUploads: any[]) {
   const providerMap = new Map();
-  
+
   fileUploads.forEach(upload => {
     const provider = upload.provider;
     if (!providerMap.has(provider)) {
@@ -197,12 +303,12 @@ function getProviderBreakdown(fileUploads: any[]) {
         uploads: []
       });
     }
-    
+
     const providerData = providerMap.get(provider);
     providerData.upload_count++;
     providerData.total_file_size += upload.file_size || 0;
     providerData.uploads.push(upload);
-    
+
     if (upload.upload_status === 'success') {
       providerData.successful_uploads++;
     } else {
@@ -211,7 +317,7 @@ function getProviderBreakdown(fileUploads: any[]) {
   });
 
   const totalUploads = fileUploads.length;
-  
+
   return Array.from(providerMap.values()).map(provider => ({
     id: provider.provider,
     label: getProviderLabel(provider.provider),
@@ -230,7 +336,7 @@ function getProviderBreakdown(fileUploads: any[]) {
 // Helper function to get file type breakdown from file uploads
 function getFileTypeBreakdown(fileUploads: any[]) {
   const fileTypeMap = new Map();
-  
+
   fileUploads.forEach(upload => {
     const fileType = upload.file_type;
     if (!fileTypeMap.has(fileType)) {
@@ -241,7 +347,7 @@ function getFileTypeBreakdown(fileUploads: any[]) {
         uploads: []
       });
     }
-    
+
     const fileTypeData = fileTypeMap.get(fileType);
     fileTypeData.upload_count++;
     fileTypeData.total_file_size += upload.file_size || 0;
@@ -249,7 +355,7 @@ function getFileTypeBreakdown(fileUploads: any[]) {
   });
 
   const totalUploads = fileUploads.length;
-  
+
   return Array.from(fileTypeMap.values()).map(fileType => ({
     id: fileType.file_type,
     label: getFileTypeLabel(fileType.file_type),
@@ -264,17 +370,17 @@ function getFileTypeBreakdown(fileUploads: any[]) {
   }));
 }
 
-// Helper function to generate monthly data from file uploads
-function generateMonthlyDataFromUploads(fileUploads: any[], startDate: Date, endDate: Date) {
+// Helper function to generate monthly data from file uploads and usage logs
+function generateMonthlyData(fileUploads: any[], usageLogs: any[], startDate: Date, endDate: Date) {
   const monthlyMap = new Map();
   const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-  
+
   // Initialize all months in the range
   const currentDate = new Date(startDate);
   while (currentDate <= endDate) {
     const monthKey = `${currentDate.getFullYear()}-${currentDate.getMonth()}`;
     const monthLabel = `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
-    
+
     if (!monthlyMap.has(monthKey)) {
       monthlyMap.set(monthKey, {
         month: monthLabel,
@@ -287,37 +393,49 @@ function generateMonthlyDataFromUploads(fileUploads: any[], startDate: Date, end
         successfulUploads: 0
       });
     }
-    
+
     // Move to next month
     currentDate.setMonth(currentDate.getMonth() + 1);
   }
-  
+
   // Group uploads by month
   fileUploads.forEach(upload => {
     const uploadDate = new Date(upload.uploaded_at);
     const monthKey = `${uploadDate.getFullYear()}-${uploadDate.getMonth()}`;
-    
+
     if (monthlyMap.has(monthKey)) {
       const monthData = monthlyMap.get(monthKey);
       monthData.uploads++;
-      monthData.bandwidth += (upload.file_size || 0) / (1024 * 1024); // Convert to MB (not GB)
-      monthData.apiCalls++;
-      
+      monthData.bandwidth += (upload.file_size || 0) / (1024 * 1024); // Convert to MB
+
       if (upload.upload_status === 'success') {
         monthData.successfulUploads++;
       }
-      
+
       // Track provider usage
       if (!monthData.providers[upload.provider]) {
         monthData.providers[upload.provider] = 0;
       }
       monthData.providers[upload.provider]++;
-      
+
       // Track file type usage
       if (!monthData.fileTypes[upload.file_type]) {
         monthData.fileTypes[upload.file_type] = 0;
       }
       monthData.fileTypes[upload.file_type]++;
+    }
+  });
+
+  // Integreate Usage Logs for API Calls count
+  usageLogs.forEach(log => {
+    const logDate = new Date(log.created_at);
+    const monthKey = `${logDate.getFullYear()}-${logDate.getMonth()}`;
+
+    if (monthlyMap.has(monthKey)) {
+      const monthData = monthlyMap.get(monthKey);
+      // Add request count (default to 1 if not present)
+      const count = log.request_count || 1;
+      monthData.apiCalls += count;
     }
   });
 

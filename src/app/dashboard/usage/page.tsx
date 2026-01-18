@@ -1,13 +1,24 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useSubscription } from '@/contexts/subscription-context';
+import { useDebounce } from 'use-debounce';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DateRangePicker } from '@/components/date-range-picker';
 import { FilterButton } from '@/components/filter-button';
-import { TrendingUp, Database, FileType } from 'lucide-react';
+import { TrendingUp, Database, FileType, Shield, Trash2, ShieldX } from 'lucide-react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table';
 import { type DateRange } from 'react-day-picker';
-import { Area, CartesianGrid, ComposedChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts';
+import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { AppSidebar } from "@/components/app-sidebar";
 import {
   Breadcrumb,
@@ -23,6 +34,9 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { PlanBadge } from '@/components/plan-badge'
+import { Progress } from "@/components/ui/progress"
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 
 // Types for our live data
 interface UsageData {
@@ -68,63 +82,21 @@ interface CurrentUsage {
 const chartConfig = {
   uploads: {
     label: 'Uploads',
-    color: 'var(--violet-500, #8b5cf6)',
+    color: 'hsl(var(--chart-1))',
   },
   bandwidth: {
     label: 'Bandwidth',
-    color: 'var(--blue-500, #3b82f6)',
+    color: 'hsl(var(--chart-2))',
   },
   apiCalls: {
     label: 'API Calls',
-    color: 'var(--emerald-500, #10b981)',
+    color: 'hsl(var(--chart-3))',
   },
   successRate: {
     label: 'Success Rate',
-    color: 'var(--amber-500, #f59e0b)',
+    color: 'hsl(var(--chart-4))',
   },
-};
-
-// Custom Tooltip
-interface TooltipProps {
-  active?: boolean;
-  payload?: Array<{
-    dataKey: string;
-    value: number;
-    color: string;
-  }>;
-  label?: string;
-}
-
-const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="rounded-lg bg-zinc-900 text-white p-3 shadow-lg">
-        <div className="text-xs font-medium mb-1">{label}</div>
-        <div className="grid gap-1">
-          {payload.map((entry, index) => (
-            <div key={`item-${index}`} className="flex items-center gap-2">
-              <div
-                className="w-3 h-3 rounded-full"
-                style={{ backgroundColor: entry.color }}
-              />
-              <div className="text-xs font-medium">{entry.dataKey}:</div>
-              <div className="text-sm font-semibold">
-                {entry.dataKey === 'bandwidth'
-                  ? entry.value > 1000 
-                    ? `${(entry.value / 1000).toFixed(2)} GB` 
-                    : `${entry.value.toFixed(2)} MB`
-                  : entry.dataKey === 'successRate'
-                  ? `${entry.value}%`
-                  : entry.value.toLocaleString()}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-  return null;
-};
+} satisfies ChartConfig;
 
 // Default data for loading state
 const defaultUsageData: UsageData[] = [];
@@ -141,7 +113,7 @@ const defaultCurrentUsage: CurrentUsage = {
 
 export default function UsagePage() {
   const [selectedMetric, setSelectedMetric] = useState<'uploads' | 'bandwidth' | 'apiCalls' | 'successRate'>('uploads');
-  
+
   // Set default date range to last month to today
   const [dateRange, setDateRange] = useState<DateRange>(() => {
     const today = new Date();
@@ -151,16 +123,24 @@ export default function UsagePage() {
       to: today,
     };
   });
-  
+
   const [selectedProviders, setSelectedProviders] = useState<string[]>([]);
   const [selectedFileTypes, setSelectedFileTypes] = useState<string[]>([]);
-  
+
+  // Debounce filter changes - wait 500ms after last change before fetching
+  const [debouncedProviders] = useDebounce(selectedProviders, 500);
+  const [debouncedFileTypes] = useDebounce(selectedFileTypes, 500);
+
   // Live data state
   const [apiUsageData, setApiUsageData] = useState<UsageData[]>(defaultUsageData);
   const [storageProviders, setStorageProviders] = useState<ProviderData[]>(defaultProviderData);
   const [fileTypes, setFileTypes] = useState<FileTypeData[]>(defaultFileTypeData);
   const [currentUsage, setCurrentUsage] = useState<CurrentUsage>(defaultCurrentUsage);
+  const [usageByKey, setUsageByKey] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Use subscription context instead of fetching
+  const { subscription: subscriptionData } = useSubscription();
   const [error, setError] = useState<string | null>(null);
 
   // Fetch live data from API
@@ -168,54 +148,43 @@ export default function UsagePage() {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Format dates for the API
       const startDate = dateRangeToUse.from ? dateRangeToUse.from.toISOString() : undefined;
       const endDate = dateRangeToUse.to ? dateRangeToUse.to.toISOString() : undefined;
-      
-      // Build the URL with date parameters
+
       const url = new URL('/api/usage/history', window.location.origin);
       if (startDate) url.searchParams.append('startDate', startDate);
       if (endDate) url.searchParams.append('endDate', endDate);
-      
-      // Add provider and file type filters
-      if (selectedProviders.length > 0) {
-        url.searchParams.append('providers', selectedProviders.join(','));
-      }
-      if (selectedFileTypes.length > 0) {
-        url.searchParams.append('fileTypes', selectedFileTypes.join(','));
-      }
-      
-      console.log('Fetching data with filters:', { 
-        startDate, 
-        endDate, 
-        providers: selectedProviders, 
-        fileTypes: selectedFileTypes 
-      });
-      
-      const response = await fetch(url.toString());
-      if (!response.ok) {
-        throw new Error('Failed to fetch usage data');
-      }
-      
-      const data = await response.json();
-      
-      setApiUsageData(data.monthlyData || []);
-      setStorageProviders(data.providerBreakdown || []);
-      setFileTypes(data.fileTypeBreakdown || []);
-      setCurrentUsage(data.currentUsage || defaultCurrentUsage);
+
+      // Use debounced filter values
+      if (debouncedProviders.length > 0) url.searchParams.append('providers', debouncedProviders.join(','));
+      if (debouncedFileTypes.length > 0) url.searchParams.append('fileTypes', debouncedFileTypes.join(','));
+
+      // Only fetch usage data, subscription comes from context
+      const usageRes = await fetch(url.toString());
+
+      if (!usageRes.ok) throw new Error('Failed to fetch usage data');
+
+      const usageData = await usageRes.json();
+
+      setApiUsageData(usageData.monthlyData || []);
+      setStorageProviders(usageData.providerBreakdown || []);
+      setFileTypes(usageData.fileTypeBreakdown || []);
+      setCurrentUsage(usageData.currentUsage || defaultCurrentUsage);
+      setUsageByKey(usageData.usageByKey || []);
     } catch (err) {
-      console.error('Error fetching usage data:', err);
+      console.error('Error fetching data:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch usage data');
     } finally {
       setLoading(false);
     }
   };
 
-  // Fetch data on component mount and when filters change
+  // Fetch data on component mount and when debounced filters change
   useEffect(() => {
     fetchUsageData();
-  }, [selectedProviders, selectedFileTypes]);
+  }, [debouncedProviders, debouncedFileTypes]);
 
 
   // Handle date range change
@@ -238,7 +207,7 @@ export default function UsagePage() {
   const dateRangeText = dateRange.from && dateRange.to
     ? `${dateRange.from.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${dateRange.to.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
     : 'Select date range';
-  
+
   // Calculate totals based on the most recent month
   const latestMonth = apiUsageData[apiUsageData.length - 1] || {
     uploads: 0,
@@ -246,7 +215,7 @@ export default function UsagePage() {
     apiCalls: 0,
     successRate: 0
   };
-  
+
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -261,9 +230,7 @@ export default function UsagePage() {
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="/dashboard">
-                    Dashboard
-                  </BreadcrumbLink>
+                  Dashboard
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
@@ -273,13 +240,35 @@ export default function UsagePage() {
             </Breadcrumb>
           </div>
         </header>
-        
+
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+          {/* Permanent Ban Alert */}
+          {subscriptionData?.data?.ban?.isPermanentlyBanned && (
+            <Alert variant="destructive" className="border-red-500/50 bg-red-500/10">
+              <ShieldX className="h-4 w-4" />
+              <AlertTitle>Account Permanently Banned</AlertTitle>
+              <AlertDescription>
+                Your account has been permanently banned from using this API.
+                {subscriptionData.data.ban.reason && (
+                  <span className="block mt-1 text-xs opacity-80">Reason: {subscriptionData.data.ban.reason}</span>
+                )}
+                {subscriptionData.data.ban.canAppeal && (
+                  <a href="mailto:support@obitox.com" className="block mt-2 underline font-medium">
+                    Contact Support to Appeal
+                  </a>
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* API Usage Chart */}
             <Card className="col-span-1 lg:col-span-2">
               <CardHeader className="border-0 min-h-auto pt-6 pb-4 flex flex-row items-center justify-between">
-                <CardTitle className="text-lg font-semibold">API Usage</CardTitle>
+                <div className="flex items-center gap-4">
+                  <CardTitle className="text-lg font-semibold text-3xl">API Usage</CardTitle>
+                  <PlanBadge />
+                </div>
                 <div className="flex gap-2">
                   <DateRangePicker
                     dateRange={dateRange}
@@ -309,7 +298,40 @@ export default function UsagePage() {
                   <div className="text-xs font-medium text-muted-foreground tracking-wide mb-2">
                     {dateRangeText}
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mt-4">
+                    {/* Plan Quota Card */}
+                    <div className="p-4 border rounded-lg bg-muted/20">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-sm font-medium text-muted-foreground">Monthly Quota</div>
+                        {subscriptionData?.data && (
+                          <div className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
+                            {subscriptionData.data.plan_name}
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-2xl font-bold mb-3">
+                        {loading ? '...' : (
+                          subscriptionData?.data ? (
+                            <>
+                              {subscriptionData.data.requests_used.toLocaleString()}
+                              <span className="text-sm font-normal text-muted-foreground ml-1">
+                                / {subscriptionData.data.requests_limit.toLocaleString()}
+                              </span>
+                            </>
+                          ) : 'No data'
+                        )}
+                      </div>
+                      {subscriptionData?.data && (
+                        <div className="space-y-1.5">
+                          <Progress value={subscriptionData.data.usage_percent} className="h-1.5" />
+                          <div className="flex justify-between text-[10px] text-muted-foreground">
+                            <span>{subscriptionData.data.usage_percent}% used</span>
+                            <span>{subscriptionData.data.requests_remaining.toLocaleString()} left</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
                     <div className="p-4 border rounded-lg">
                       <div className="text-sm font-medium text-muted-foreground mb-1">Total Uploads</div>
                       <div className="text-2xl font-bold">
@@ -323,26 +345,6 @@ export default function UsagePage() {
                             Filtered from {currentUsage.totalFilesUploaded.toLocaleString()} total files
                           </div>
                         )}
-                      </div>
-                    </div>
-                    <div className="p-4 border rounded-lg">
-                      <div className="text-sm font-medium text-muted-foreground mb-1">Total Bandwidth</div>
-                      <div className="text-2xl font-bold">
-                        {loading ? 'Loading...' : (
-                          (() => {
-                            // Calculate bandwidth in MB
-                            const bandwidthMB = selectedProviders.length > 0 || selectedFileTypes.length > 0
-                              ? apiUsageData.reduce((sum, month) => sum + month.bandwidth, 0)
-                              : (currentUsage.totalFileSize / (1024 * 1024));
-                            
-                            // Auto-convert to GB if over 1000 MB
-                            if (bandwidthMB > 1000) {
-                              return `${(bandwidthMB / 1000).toFixed(2)} GB`;
-                            } else {
-                              return `${bandwidthMB.toFixed(2)} MB`;
-                            }
-                          })()
-                        )} processed
                       </div>
                     </div>
                     <div className="p-4 border rounded-lg">
@@ -361,10 +363,10 @@ export default function UsagePage() {
                         {loading ? 'Loading...' : (
                           <>
                             {selectedProviders.length > 0 || selectedFileTypes.length > 0
-                              ? apiUsageData.length > 0 
+                              ? apiUsageData.length > 0
                                 ? Math.round(apiUsageData.reduce((sum, month) => sum + month.successRate, 0) / apiUsageData.length)
                                 : 0
-                              : currentUsage.totalRequests > 0 
+                              : currentUsage.totalRequests > 0
                                 ? Math.round((currentUsage.successfulRequests / currentUsage.totalRequests) * 100)
                                 : 0
                             }%
@@ -390,88 +392,127 @@ export default function UsagePage() {
                       <div className="text-muted-foreground">No data available for the selected period</div>
                     </div>
                   ) : (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <ComposedChart
+                    <ChartContainer config={chartConfig} className="h-full w-full">
+                      <BarChart
+                        accessibilityLayer
                         data={apiUsageData}
                         margin={{
+                          left: 12,
+                          right: 12,
                           top: 20,
-                          right: 30,
-                          left: 20,
                           bottom: 20,
                         }}
                       >
-                        {/* Gradient */}
-                        <defs>
-                          <linearGradient id="uploadsGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor={chartConfig.uploads.color} stopOpacity={0.15} />
-                            <stop offset="100%" stopColor={chartConfig.uploads.color} stopOpacity={0} />
-                          </linearGradient>
-                        </defs>
-
-                        <CartesianGrid
-                          strokeDasharray="4 12"
-                          stroke="var(--input)"
-                          strokeOpacity={1}
-                          horizontal={true}
-                          vertical={false}
-                        />
-
+                        <CartesianGrid vertical={false} />
                         <XAxis
                           dataKey="month"
-                          axisLine={false}
                           tickLine={false}
-                          tick={{ fontSize: 12 }}
-                          tickMargin={12}
-                        />
-
-                        <YAxis
                           axisLine={false}
-                          tickLine={false}
-                          tick={{ fontSize: 12 }}
-                          tickFormatter={(value) => `${value}`}
-                          domain={[0, 'dataMax + 100']}
-                          tickCount={6}
-                          tickMargin={12}
-                        />
-
-                        <Tooltip content={<CustomTooltip />} />
-
-                        {/* Area under line */}
-                        <Area
-                          type="monotone"
-                          dataKey="uploads"
-                          stroke="transparent"
-                          fill="url(#uploadsGradient)"
-                          strokeWidth={0}
-                          dot={false}
-                        />
-
-                        {/* Main line */}
-                        <Line
-                          type="monotone"
-                          dataKey="uploads"
-                          stroke={chartConfig.uploads.color}
-                          strokeWidth={3}
-                          dot={{
-                            r: 4,
-                            fill: chartConfig.uploads.color,
-                            stroke: 'white',
-                            strokeWidth: 2,
-                          }}
-                          activeDot={{
-                            r: 6,
-                            fill: chartConfig.uploads.color,
-                            stroke: 'white',
-                            strokeWidth: 2,
+                          tickMargin={8}
+                          minTickGap={32}
+                          tickFormatter={(value) => {
+                            // Format month string for display
+                            return value;
                           }}
                         />
-                      </ComposedChart>
-                    </ResponsiveContainer>
+                        <ChartTooltip
+                          content={
+                            <ChartTooltipContent
+                              className="w-[180px]"
+                              labelFormatter={(value) => {
+                                return value;
+                              }}
+                            />
+                          }
+                        />
+                        <Bar dataKey="uploads" fill="var(--color-uploads)" radius={4} />
+                      </BarChart>
+                    </ChartContainer>
                   )}
                 </div>
               </CardContent>
             </Card>
 
+            {/* API Key Usage Table */}
+            <Card className="col-span-1 lg:col-span-2">
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold">Usage by API Key</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-md border overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="hover:bg-transparent border-b">
+                        <TableHead>Key Name</TableHead>
+                        <TableHead>Token Fragment</TableHead>
+                        <TableHead className="text-right">Usage</TableHead>
+                        <TableHead>Last Used</TableHead>
+                        <TableHead className="text-right">Action</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {loading ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center py-6">
+                            Loading key usage...
+                          </TableCell>
+                        </TableRow>
+                      ) : usageByKey.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center py-6">
+                            No API keys found
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        usageByKey.map((key) => (
+                          <TableRow key={key.id} className="hover:bg-muted/50 border-b">
+                            <TableCell>
+                              <div className="flex items-center space-x-3">
+                                {key.id === 'deleted-keys' ? (
+                                  <div className="bg-red-500/10 text-red-500 p-1 rounded-full">
+                                    <Trash2 className="h-4 w-4" />
+                                  </div>
+                                ) : (
+                                  <div className="bg-green-500/10 text-green-500 p-1 rounded-full">
+                                    <Shield className="h-4 w-4" />
+                                  </div>
+                                )}
+                                <span className={key.id === 'deleted-keys' ? "font-medium text-muted-foreground" : "font-medium"}>
+                                  {key.name}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <code className="text-[10px] bg-zinc-900 px-1.5 py-0.5 rounded text-muted-foreground font-mono">
+                                {key.key_value.substring(0, 10)}...{key.key_value.substring(key.key_value.length - 4)}
+                              </code>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <span className="font-semibold">{key.usage.toLocaleString()}</span>
+                            </TableCell>
+                            <TableCell className="text-xs text-muted-foreground">
+                              {key.last_used_at ? new Date(key.last_used_at).toLocaleString() : 'Never'}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {key.id === 'deleted-keys' ? (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              ) : (
+                                <a
+                                  href="/dashboard/api"
+                                  className="text-xs text-primary hover:underline font-medium"
+                                >
+                                  Manage
+                                </a>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </SidebarInset>

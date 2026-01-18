@@ -24,6 +24,7 @@ export function NavDocuments({
     name: string
     url: string
     icon: Icon
+    badge?: React.ReactNode  // Optional badge (e.g., red dot indicator)
   }[]
 }) {
   const { isMobile } = useSidebar()
@@ -35,21 +36,22 @@ export function NavDocuments({
         {items.map((item) => {
           // Check if the current URL path starts with this item's URL path
           const isActive = pathname.startsWith(item.url);
-          
+
           return (
             <SidebarMenuItem key={item.name}>
-              <SidebarMenuButton 
-                asChild 
-                size="lg" 
+              <SidebarMenuButton
+                asChild
+                size="lg"
                 className={cn(
                   isActive && "bg-primary/10 font-medium text-primary"
                 )}
               >
-                <a href={item.url}>
+                <a href={item.url} className="flex items-center gap-2 relative">
                   <item.icon className={cn(
                     isActive && "text-primary"
                   )} />
                   <span>{item.name}</span>
+                  {item.badge}
                 </a>
               </SidebarMenuButton>
             </SidebarMenuItem>

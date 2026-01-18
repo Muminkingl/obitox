@@ -1,114 +1,165 @@
-'use client';
+import React from 'react'
+import Link from 'next/link'
+import LogoCloud from './logo-cloud'
+import { Button } from '@/components/ui/button'
+import CommandButton from '@/components/ui/command-button'
+import Image from 'next/image'
+import { TextEffect } from '@/components/ui/text-effect'
+import { AnimatedGroup } from '@/components/ui/animated-group'
+import { HeroHeader } from './header'
+import TypewriterTitle from '@/components/texttttt'
 
-import React from 'react';
-import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import Image from 'next/image';
-import { AnimatedGroup } from '@/components/motion-primitives/animated-group';
-import { HeroHeader } from '@/components/header';
-import RotatingText from '@/components/ui/RotatingText';
-import DarkVeil from '@/components/ui/DarkVeil';
+const transitionVariants = {
+    item: {
+        hidden: {
+            opacity: 0,
+            filter: 'blur(12px)',
+            y: 12,
+        },
+        visible: {
+            opacity: 1,
+            filter: 'blur(0px)',
+            y: 0,
+            transition: {
+                type: 'spring' as const,
+                bounce: 0.3,
+                duration: 1.5,
+            },
+        },
+    },
+}
 
 export default function HeroSection() {
-  return (
-    <>
-      <HeroHeader />
-      <main className="relative overflow-hidden">
-        <section>
-          <div className="relative pt-24 md:pt-36">
-            <AnimatedGroup className="absolute inset-0 -z-20">
-              <DarkVeil />
-            </AnimatedGroup>
-            <div className="absolute inset-0 -z-10 size-full [background:radial-gradient(125%_125%_at_50%_100%,transparent_0%,var(--color-background)_75%)]" />
-            <div className="mx-auto max-w-7xl px-6">
-              <div className="text-center sm:mx-auto lg:mr-auto lg:mt-0">
-                <div className="text-balance text-4xl font-bold md:text-5xl lg:mt-16 xl:text-6xl">
-                  <h1>Universal Upload API for Developers</h1>
-                  <div className="flex justify-center items-baseline">
-                    <h1>Focus on building, not&nbsp;</h1>
-                    <RotatingText
-                      texts={['config', 'uploads', 'debugging']}
-                      mainClassName="px-3 sm:px-3 md:px-4 bg-[#6633ff] text-white overflow-hidden py-1 sm:py-1.5 md:py-2 justify-center items-center flex rounded-lg min-h-[1.2em] leading-none"
-                      staggerFrom={'last'}
-                      initial={{ y: '100%' }}
-                      animate={{ y: 0 }}
-                      exit={{ y: '-120%' }}
-                      staggerDuration={0.025}
-                      splitLevelClassName="overflow-hidden flex items-center justify-center h-full"
-                      elementLevelClassName="flex items-center justify-center leading-none"
-                      transition={{
-                        type: 'spring',
-                        damping: 30,
-                        stiffness: 400,
-                      }}
-                      rotationInterval={2000}
-                    />
-                  </div>
-                </div>
-                <p className="mx-auto mt-8 max-w-2xl text-balance text-lg text-muted-foreground">
-                  Highly customizable components for building modern websites
-                  and applications that look and feel the way you mean it.
-                </p>
-
-                <AnimatedGroup className="mt-12 flex flex-col items-center justify-center gap-2 md:flex-row">
-                  <div
-                    key={1}
-                    className="bg-foreground/10 rounded-[calc(var(--radius-xl)+0.125rem)] border p-0.5"
-                  >
-                    <Button
-                      asChild
-                      size="lg"
-                      className="rounded-xl px-5 text-base"
-                    >
-                      <Link href="/login">
-                        <span className="text-nowrap">Start Building</span>
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </div>
-                  <Button
-                    key={2}
-                    asChild
-                    size="lg"
-                    variant="ghost"
-                    className="h-10.5 rounded-xl px-5"
-                  >
-                    <Link href="#link">
-                      <span className="text-nowrap">Request a demo</span>
-                    </Link>
-                  </Button>
-                </AnimatedGroup>
-              </div>
-            </div>
-
-            <AnimatedGroup>
-              <div className="relative -mr-56 mt-8 overflow-hidden px-2 sm:mr-0 sm:mt-12 md:mt-20">
+    return (
+        <>
+            <HeroHeader />
+            <main className="overflow-hidden">
                 <div
-                  aria-hidden
-                  className="bg-linear-to-b to-background absolute inset-0 z-10 from-transparent from-35%"
-                />
-                <div className="inset-shadow-2xs ring-background dark:inset-shadow-white/20 bg-background relative mx-auto max-w-6xl overflow-hidden rounded-2xl border p-4 shadow-lg shadow-zinc-950/15 ring-1">
-                  <Image
-                    className="bg-background aspect-15/8 relative hidden rounded-2xl dark:block"
-                    src="https://picsum.photos/1350/720"
-                    alt="app screen"
-                    width="2700"
-                    height="1440"
-                  />
-                  <Image
-                    className="z-2 border-border/25 aspect-15/8 relative rounded-2xl border dark:hidden"
-                    src="https://picsum.photos/1350/720"
-                    alt="app screen"
-                    width="2700"
-                    height="1440"
-                  />
+                    aria-hidden
+                    className="absolute inset-0 isolate hidden opacity-65 contain-strict lg:block">
+                    <div className="w-140 h-320 -translate-y-87.5 absolute left-0 top-0 -rotate-45 rounded-full bg-[radial-gradient(68.54%_68.72%_at_55.02%_31.46%,hsla(0,0%,85%,.08)_0,hsla(0,0%,55%,.02)_50%,hsla(0,0%,45%,0)_80%)]" />
+                    <div className="h-320 absolute left-0 top-0 w-60 -rotate-45 rounded-full bg-[radial-gradient(50%_50%_at_50%_50%,hsla(0,0%,85%,.06)_0,hsla(0,0%,45%,.02)_80%,transparent_100%)] [translate:5%_-50%]" />
+                    <div className="h-320 -translate-y-87.5 absolute left-0 top-0 w-60 -rotate-45 bg-[radial-gradient(50%_50%_at_50%_50%,hsla(0,0%,85%,.04)_0,hsla(0,0%,45%,.02)_80%,transparent_100%)]" />
                 </div>
-              </div>
-            </AnimatedGroup>
-          </div>
-        </section>
-      </main>
-    </>
-  );
+                <section>
+                    <div className="relative pt-24 md:pt-36">
+                        {/* Unified Background is now global in page.tsx */}
+
+                        <div className="mx-auto max-w-7xl px-6">
+                            <div className="text-center sm:mx-auto lg:mr-auto lg:mt-0">
+                                <TextEffect
+                                    preset="fade-in-blur"
+                                    speedSegment={0.3}
+                                    as="h1"
+                                    className="mx-auto mt-8 max-w-4xl text-balance text-5xl max-md:font-semibold md:text-7xl lg:mt-16 xl:text-[5.25rem]">
+                                    One API, Any Storage Provider.
+                                </TextEffect>
+
+                                {/* Typewriter rotating subtext */}
+                                <div className="mx-auto mt-8 max-w-2xl">
+                                    <TypewriterTitle
+                                        sequences={[
+                                            { text: "S3, Cloudflare R2, GCS, Vercel Blob, anywhere", deleteAfter: true, pauseAfter: 2500 },
+                                            { text: "Switch clouds without touching your code", deleteAfter: true, pauseAfter: 2500 },
+                                            { text: "Upload once. Works everywhere.", deleteAfter: true, pauseAfter: 2500 },
+                                        ]}
+                                        typingSpeed={50}
+                                        deleteSpeed={30}
+                                        pauseBeforeDelete={2500}
+                                        autoLoop={true}
+                                        loopDelay={500}
+                                        naturalVariance={true}
+                                    />
+                                </div>
+
+                                <AnimatedGroup
+                                    variants={{
+                                        container: {
+                                            visible: {
+                                                transition: {
+                                                    staggerChildren: 0.05,
+                                                    delayChildren: 0.75,
+                                                },
+                                            },
+                                        },
+                                        ...transitionVariants,
+                                    }}
+                                    className="mt-12 flex flex-col items-center justify-center gap-4">
+                                    <div className="flex flex-col items-center justify-center gap-2 md:flex-row">
+                                        <div
+                                            key={1}
+                                            className="bg-foreground/10 rounded-[calc(var(--radius-xl)+0.125rem)] border p-0.5">
+                                            <Button
+                                                asChild
+                                                size="lg"
+                                                className="rounded-xl px-5 text-base">
+                                                <Link href="/dashboard">
+                                                    <span className="text-nowrap">Start Free</span>
+                                                </Link>
+                                            </Button>
+                                        </div>
+                                        <Link href="/docs" key={2}>
+                                            <CommandButton className="h-10.5 px-5 shadow-sm min-w-[140px]">
+                                                Documentation
+                                            </CommandButton>
+                                        </Link>
+                                    </div>
+
+                                    {/* Trust Signals */}
+                                    <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground/80">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-primary font-bold">✓</span>
+                                            <span>1,000 free requests/month</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-primary font-bold">✓</span>
+                                            <span>All providers included</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-primary font-bold">✓</span>
+                                            <span>No credit card required</span>
+                                        </div>
+                                    </div>
+                                </AnimatedGroup>
+
+                                {/* Restored App Screenshot */}
+                                <AnimatedGroup
+                                    variants={{
+                                        container: {
+                                            visible: {
+                                                transition: {
+                                                    staggerChildren: 0.05,
+                                                    delayChildren: 0.75,
+                                                },
+                                            },
+                                        },
+                                        ...transitionVariants,
+                                    }}>
+                                    <div className="mask-b-from-55% relative -mr-56 mt-8 overflow-hidden px-2 sm:mr-0 sm:mt-12 md:mt-20">
+                                        <div className="inset-shadow-2xs ring-background dark:inset-shadow-white/20 bg-background relative mx-auto max-w-6xl overflow-hidden rounded-2xl border p-4 shadow-lg shadow-zinc-950/15 ring-1">
+                                            <Image
+                                                className="bg-background aspect-15/8 relative hidden rounded-2xl dark:block"
+                                                src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop"
+                                                alt="app screen dark"
+                                                width="1350"
+                                                height="720"
+                                            />
+                                            <Image
+                                                className="z-2 border-border/25 aspect-15/8 relative rounded-2xl border dark:hidden"
+                                                src="https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2670&auto=format&fit=crop"
+                                                alt="app screen light"
+                                                width="1350"
+                                                height="720"
+                                            />
+                                        </div>
+                                    </div>
+                                </AnimatedGroup>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <LogoCloud />
+            </main>
+        </>
+    )
 }

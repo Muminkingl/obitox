@@ -4,7 +4,7 @@ import {
   BadgeCheck,
   Bell,
   ChevronsUpDown,
-  CreditCard,
+  Settings,
   LogOut,
   Sparkles,
 } from "lucide-react"
@@ -82,19 +82,23 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  window.location.href = '/pricing';
+                }}
+              >
                 <Sparkles className="mr-2 h-4 w-4" />
                 Upgrade to Pro
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              
-              <DropdownMenuItem>
-                <CreditCard className="mr-2 h-4 w-4" />
-                Billing
+
+              <DropdownMenuItem onClick={() => window.location.href = '/dashboard/settings'}>
+                <Settings className="mr-2 h-4 w-4" />
+                Settings
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => window.location.href = '/dashboard/notifications'}>
                 <Bell className="mr-2 h-4 w-4" />
                 Notifications
               </DropdownMenuItem>

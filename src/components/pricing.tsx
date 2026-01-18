@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import NumberFlow from '@number-flow/react';
 import { Badge } from '@/components/ui/badge';
@@ -19,50 +20,133 @@ import { motion } from 'framer-motion';
 
 const plans = [
   {
-    id: 'monthly',
-    name: 'Monthly Plan',
+    id: 'free',
+    name: 'Free',
     icon: Star,
-    price: 3.99,
-    description:
-      'The perfect starting place for your web app or personal project, with a 14-day free trial. No credit card required.',
+    priceMonthly: 0,
+    priceYearly: 0,
+    description: 'Perfect for development and hobby projects',
     features: [
-      '50 API calls / month',
-      '60 second checks',
-      'Single-user account',
-      '5 monitors',
-      'Basic email support',
+      '1,000 API requests/month',
+      '1 domain',
+      '1 API key',
+      'All 4 storage providers',
+      'Batch operations (max 5 files)',
+      'Basic usage stats',
+      'Community support',
+      'Rate limiting: 10 req/min',
     ],
-    cta: 'Start 14-day free trial',
+    cta: 'Start for free',
   },
   {
-    id: 'yearly',
-    name: 'Yearly Plan',
+    id: 'pro',
+    name: 'Pro',
     icon: Zap,
-    price: 25,
-    description: 'Everything you need to build and scale your business.',
+    priceMonthly: 23,
+    priceYearly: 19, // $228 billed annually
+    description: 'Mission critical infra for startups',
     features: [
-      'Unlimited API calls',
-      '30 second checks',
-      'Multi-user account',
-      '10 monitors',
-      'Priority email support',
+      '50,000 API requests/month',
+      '10 domains',
+      '20 API keys',
+      'Unlimited storage providers',
+      'Batch operations (max 100 files)',
+      'Production-grade auth (JWT)',
+      'Usage & abuse detection',
+      'Priority support (24-48h)',
     ],
-    cta: 'Subscribe to Yearly',
+    cta: 'Get Started with Pro',
     popular: true,
+  },
+  {
+    id: 'enterprise',
+    name: 'Enterprise',
+    icon: Shield,
+    priceMonthly: null,
+    priceYearly: null,
+    description: 'Scale ready infra with custom control',
+    features: [
+      'Custom API request limits',
+      'Enterprise grade domain & credential management',
+      'Compliance & audit support',
+      'Custom legal agreements (DPA)',
+      'Private Slack or shared channel',
+      'Migration & onboarding assistance',
+      'Custom SLA (99.95%+)',
+      'Dedicated support (4h response)',
+    ],
+    cta: 'Contact Sales',
+    enterprise: true,
   },
 ];
 
 export default function SimplePricing() {
   const [mounted, setMounted] = useState(false);
+  const [isAnnual, setIsAnnual] = useState(false);
+  const [upgrading, setUpgrading] = useState(false);
+  const [currentTier, setCurrentTier] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
+    fetchCurrentTier();
   }, []);
+
+  async function fetchCurrentTier() {
+    try {
+      const response = await fetch('/api/subscription');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setCurrentTier(data.data.tier);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch current tier:', error);
+      // If user is not logged in or fetch fails, assume they need to sign up
+      setCurrentTier(null);
+    }
+  }
+
+  async function handleUpgrade(plan: 'pro' | 'enterprise') {
+    if (plan === 'enterprise') {
+      // Keep enterprise as contact sales
+      window.location.href = '/contact';
+      return;
+    }
+
+    setUpgrading(true);
+
+    try {
+      // Use new webhook-based payment link creation endpoint
+      const response = await fetch('/api/billing/create-payment-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plan,
+          billingCycle: isAnnual ? 'yearly' : 'monthly'
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Failed to create payment link');
+      }
+
+      // Redirect to Wayl payment page
+      window.location.href = data.paymentUrl;
+    } catch (error: any) {
+      console.error('Upgrade error:', error);
+      alert(error.message || 'Failed to start upgrade process. Please try again.');
+      setUpgrading(false);
+    }
+  }
 
   if (!mounted) return null;
 
+
   return (
-    <div className="not-prose flex w-full flex-col gap-16 px-4 py-24 text-center sm:px-8">
+    <div className="not-prose flex w-full flex-col gap-12 px-4 py-24 text-center sm:px-8">
       <div className="flex flex-col items-center justify-center gap-8">
         <div className="flex flex-col items-center space-y-2">
           <Badge
@@ -91,7 +175,24 @@ export default function SimplePricing() {
           </motion.p>
         </div>
 
-        <div className="mt-8 grid w-full max-w-6xl grid-cols-1 gap-6 md:grid-cols-2">
+        {/* Toggle */}
+        <div className="flex items-center justify-center gap-4 mt-4">
+          <Tabs value={isAnnual ? 'yearly' : 'monthly'} onValueChange={(v) => setIsAnnual(v === 'yearly')}>
+            <TabsList className="bg-muted/50 border p-1 h-11 rounded-full px-1">
+              <TabsTrigger value="monthly" className="rounded-full px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                Monthly
+              </TabsTrigger>
+              <TabsTrigger value="yearly" className="rounded-full px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                Yearly
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <Badge variant="outline" className="text-destructive bg-destructive/10 border-destructive/20 rounded-full px-3 py-1 text-xs font-semibold">
+            20% off
+          </Badge>
+        </div>
+
+        <div className="mt-8 grid w-full max-w-7xl grid-cols-1 gap-6 md:grid-cols-3">
           {plans.map((plan, index) => (
             <motion.div
               key={plan.id}
@@ -108,12 +209,13 @@ export default function SimplePricing() {
                     ? 'ring-primary/50 dark:shadow-primary/10 shadow-md ring-2'
                     : 'hover:border-primary/30',
                   plan.popular &&
-                    'from-primary/[0.03] bg-gradient-to-b to-transparent',
+                  'from-primary/[0.03] bg-gradient-to-b to-transparent',
+                  plan.enterprise && 'border-primary/30'
                 )}
               >
                 {plan.popular && (
                   <div className="absolute -top-3 right-0 left-0 mx-auto w-fit">
-                    <Badge className="bg-primary text-primary-foreground rounded-full px-4 py-1 shadow-sm">
+                    <Badge className="bg-primary text-primary-foreground rounded-full px-4 py-1 shadow-sm font-semibold">
                       <Sparkles className="mr-1 h-3.5 w-3.5" />
                       Popular
                     </Badge>
@@ -123,13 +225,15 @@ export default function SimplePricing() {
                   <div className="flex items-center gap-2">
                     <div
                       className={cn(
-                        'flex h-8 w-8 items-center justify-center rounded-full',
+                        'flex h-10 w-10 items-center justify-center rounded-xl',
                         plan.popular
                           ? 'bg-primary/10 text-primary'
-                          : 'bg-secondary text-foreground',
+                          : plan.enterprise
+                            ? 'bg-zinc-800 text-zinc-400'
+                            : 'bg-secondary text-foreground',
                       )}
                     >
-                      <plan.icon className="h-4 w-4" />
+                      <plan.icon className="h-5 w-5" />
                     </div>
                     <CardTitle
                       className={cn(
@@ -143,27 +247,32 @@ export default function SimplePricing() {
                   <CardDescription className="mt-3 space-y-2">
                     <p className="text-sm">{plan.description}</p>
                     <div className="pt-2">
-                      <div className="flex items-baseline">
-                        <span
-                          className={cn(
-                            'text-3xl font-bold',
-                            plan.popular ? 'text-primary' : 'text-foreground',
-                          )}
-                        >
-                          $
-                        </span>
-                        <CountUp
-                          to={plan.price as number}
-                          duration={1}
-                          className={cn(
-                            'text-3xl font-bold',
-                            plan.popular ? 'text-primary' : 'text-foreground',
-                          )}
-                        />
-                        <span className="text-muted-foreground ml-1 text-sm">
-                          {plan.id === 'monthly' ? '/month' : '/year'}
-                        </span>
-                      </div>
+                      {plan.enterprise ? (
+                        <div className="text-2xl font-bold text-foreground leading-tight mt-2">
+                          Get in touch for pricing
+                        </div>
+                      ) : (
+                        <div className="flex items-baseline">
+                          <span
+                            className={cn(
+                              'text-3xl font-bold',
+                              plan.popular ? 'text-primary' : 'text-foreground',
+                            )}
+                          >
+                            $
+                          </span>
+                          <NumberFlow
+                            value={isAnnual ? plan.priceYearly! : plan.priceMonthly!}
+                            className={cn(
+                              'text-3xl font-bold',
+                              plan.popular ? 'text-primary' : 'text-foreground',
+                            )}
+                          />
+                          <span className="text-muted-foreground ml-1 text-sm">
+                            /month
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </CardDescription>
                 </CardHeader>
@@ -174,13 +283,13 @@ export default function SimplePricing() {
                       initial={{ opacity: 0, x: -5 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.3, delay: 0.5 + index * 0.05 }}
-                      className="flex items-center gap-2 text-sm"
+                      className="flex items-center gap-3 text-sm"
                     >
                       <div
                         className={cn(
                           'flex h-5 w-5 items-center justify-center rounded-full',
                           plan.popular
-                            ? 'bg-primary/10 text-primary'
+                            ? 'bg-primary/20 text-primary'
                             : 'bg-secondary text-secondary-foreground',
                         )}
                       >
@@ -198,18 +307,30 @@ export default function SimplePricing() {
                     </motion.div>
                   ))}
                 </CardContent>
-                <CardFooter>
+                <CardFooter className="mt-auto">
                   <Button
+                    onClick={() => handleUpgrade(plan.id as 'pro' | 'enterprise')}
+                    disabled={upgrading || (plan.id === currentTier)}
                     variant={plan.popular ? 'default' : 'outline'}
                     className={cn(
-                      'w-full font-medium transition-all duration-300',
+                      'w-full font-semibold transition-all duration-300 h-11 rounded-xl group/btn',
                       plan.popular
                         ? 'bg-primary hover:bg-primary/90 hover:shadow-primary/20 hover:shadow-md'
-                        : 'hover:border-primary/30 hover:bg-primary/5 hover:text-primary',
+                        : plan.enterprise
+                          ? 'bg-zinc-100 hover:bg-white text-zinc-950 border-none'
+                          : 'hover:border-primary/30 hover:bg-primary/5 hover:text-primary',
+                      plan.id === currentTier && 'opacity-60 cursor-not-allowed',
                     )}
                   >
-                    {plan.cta}
-                    <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                    {plan.id === currentTier
+                      ? 'Current Plan'
+                      : upgrading
+                        ? 'Processing...'
+                        : plan.cta
+                    }
+                    {!upgrading && plan.id !== currentTier && (
+                      <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover/btn:translate-x-1" />
+                    )}
                   </Button>
                 </CardFooter>
 
@@ -225,6 +346,82 @@ export default function SimplePricing() {
               </Card>
             </motion.div>
           ))}
+        </div>
+
+        {/* Info Sections */}
+        <div className="mx-auto mt-24 grid w-full max-w-5xl gap-12 text-left md:grid-cols-2">
+          {/* Request Quotas */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="space-y-6"
+          >
+            <h3 className="text-2xl font-bold text-foreground">Transparent API Usage</h3>
+            <div className="bg-secondary/20 rounded-2xl border p-6 space-y-4">
+              <p className="text-muted-foreground text-sm">
+                Each operational call to the ObitoX API counts as 1 request. To ensure maximum value, the data transfer (actual file upload) happens directly between your client and your storage provider, and is never billed by ObitoX.
+              </p>
+              <ul className="space-y-3 text-sm">
+                <li className="flex items-center gap-3">
+                  <div className="h-5 w-1 bg-primary rounded-full" />
+                  <span>Authorized Upload Request → <strong>1 request</strong></span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <div className="h-5 w-1 bg-primary rounded-full" />
+                  <span>Upload Lifecycle Tracking → <strong>1 request</strong></span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <div className="h-5 w-1 bg-primary rounded-full" />
+                  <span>Management & Audit Ops → <strong>1 request</strong></span>
+                </li>
+                <li className="flex items-center gap-3 text-primary font-medium">
+                  <Zap className="h-4 w-4" />
+                  <span>High-Throughput Batch Op → <strong>1 request</strong></span>
+                </li>
+              </ul>
+              <p className="text-xs text-muted-foreground pt-2 border-t">
+                Batch thresholds: 5 files (Free), 100 files (Pro), up to 10k (Enterprise).
+              </p>
+            </div>
+          </motion.div>
+
+          {/* Architecture / The ObitoX Advantage */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="space-y-6"
+          >
+            <h3 className="text-2xl font-bold text-foreground">A Decoupled High-Performance Architecture</h3>
+            <div className="bg-secondary/20 rounded-2xl border p-6 space-y-4">
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Traditional platforms bundle storage markup and bandwidth surcharges into their API pricing.
+                <strong> ObitoX decoupling gives you total control.</strong>
+              </p>
+              <div className="grid grid-cols-2 gap-4 text-xs font-medium">
+                <div className="space-y-2">
+                  <span className="text-destructive/80 uppercase tracking-widest text-[10px]">Bundled Legacy</span>
+                  <ul className="space-y-1 text-muted-foreground font-normal">
+                    <li>❌ Storage Upcharge</li>
+                    <li>❌ Bandwidth Markup</li>
+                    <li>❌ Proprietary Lock-in</li>
+                  </ul>
+                </div>
+                <div className="space-y-2">
+                  <span className="text-primary uppercase tracking-widest text-[10px]">ObitoX Optimized</span>
+                  <ul className="space-y-1 text-foreground font-normal">
+                    <li>✅ Dedicated Logic Layer</li>
+                    <li>✅ Global Security Compliance</li>
+                    <li>✅ Real-time Observability</li>
+                  </ul>
+                </div>
+              </div>
+              <p className="text-sm border-t pt-4 italic text-muted-foreground">
+                We provide the orchestration and security. You own your data and your infrastructure. This decoupled model eliminates overhead and maximizes efficiency at scale.
+              </p>
+            </div>
+          </motion.div>
         </div>
       </div>
     </div>

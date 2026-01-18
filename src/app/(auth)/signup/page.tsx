@@ -99,8 +99,8 @@ export default function SignupPage() {
                         </div>
                         <EmailInput />
                         <PasswordInput />
-                        <Button 
-                            type="submit" 
+                        <Button
+                            type="submit"
                             className="w-full"
                             disabled={submitting}>
                             {submitting ? (

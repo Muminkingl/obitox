@@ -33,7 +33,4 @@ out/
 .idea/
 *.swp
 
-# Misc
-coverage/
-*.tgz
-".env.local" 
+
