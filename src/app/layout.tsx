@@ -6,6 +6,7 @@ import { ToastProvider } from "@/components/toast-provider";
 import { AppearanceProvider } from "@/contexts/appearance-context";
 import { SubscriptionProvider } from "@/contexts/subscription-context";
 import { Toaster } from "sonner";
+import { RouteThemeController } from "@/components/route-theme-controller";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,16 +38,18 @@ export default function RootLayout({
       >
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
         >
           <SubscriptionProvider>
             <AppearanceProvider>
-              <ToastProvider>
-                {children}
-                <Toaster position="bottom-right" theme="dark" richColors />
-              </ToastProvider>
+              <RouteThemeController>
+                <ToastProvider>
+                  {children}
+                  <Toaster position="bottom-right" theme="dark" richColors />
+                </ToastProvider>
+              </RouteThemeController>
             </AppearanceProvider>
           </SubscriptionProvider>
         </ThemeProvider>

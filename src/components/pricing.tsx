@@ -107,9 +107,15 @@ export default function SimplePricing() {
     }
   }
 
-  async function handleUpgrade(plan: 'pro' | 'enterprise') {
-    if (plan === 'enterprise') {
-      // Keep enterprise as contact sales
+  async function handleUpgrade(planId: string) {
+    // Free plan: redirect to signup (no payment needed)
+    if (planId === 'free') {
+      window.location.href = '/auth';
+      return;
+    }
+
+    // Enterprise: contact sales
+    if (planId === 'enterprise') {
       window.location.href = '/contact';
       return;
     }
@@ -117,12 +123,11 @@ export default function SimplePricing() {
     setUpgrading(true);
 
     try {
-      // Use new webhook-based payment link creation endpoint
       const response = await fetch('/api/billing/create-payment-link', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          plan,
+          plan: planId,
           billingCycle: isAnnual ? 'yearly' : 'monthly'
         })
       });
@@ -309,8 +314,8 @@ export default function SimplePricing() {
                 </CardContent>
                 <CardFooter className="mt-auto">
                   <Button
-                    onClick={() => handleUpgrade(plan.id as 'pro' | 'enterprise')}
-                    disabled={upgrading || (plan.id === currentTier)}
+                    onClick={() => handleUpgrade(plan.id)}
+                    disabled={upgrading || (plan.id === currentTier) || (currentTier === 'pro' && plan.id === 'free') || (currentTier === 'enterprise' && plan.id !== 'enterprise')}
                     variant={plan.popular ? 'default' : 'outline'}
                     className={cn(
                       'w-full font-semibold transition-all duration-300 h-11 rounded-xl group/btn',
@@ -319,16 +324,20 @@ export default function SimplePricing() {
                         : plan.enterprise
                           ? 'bg-zinc-100 hover:bg-white text-zinc-950 border-none'
                           : 'hover:border-primary/30 hover:bg-primary/5 hover:text-primary',
-                      plan.id === currentTier && 'opacity-60 cursor-not-allowed',
+                      (plan.id === currentTier || (currentTier === 'pro' && plan.id === 'free') || (currentTier === 'enterprise' && plan.id !== 'enterprise')) && 'opacity-60 cursor-not-allowed',
                     )}
                   >
                     {plan.id === currentTier
                       ? 'Current Plan'
-                      : upgrading
-                        ? 'Processing...'
-                        : plan.cta
+                      : (currentTier === 'pro' && plan.id === 'free')
+                        ? 'Included'
+                        : (currentTier === 'enterprise' && plan.id !== 'enterprise')
+                          ? 'Contact Sales to Change'
+                          : upgrading
+                            ? 'Processing...'
+                            : plan.cta
                     }
-                    {!upgrading && plan.id !== currentTier && (
+                    {!upgrading && plan.id !== currentTier && !(currentTier === 'pro' && plan.id === 'free') && !(currentTier === 'enterprise' && plan.id !== 'enterprise') && (
                       <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover/btn:translate-x-1" />
                     )}
                   </Button>

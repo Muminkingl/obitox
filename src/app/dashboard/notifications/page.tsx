@@ -103,10 +103,7 @@ export default function NotificationsPage() {
                 setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
                 toast.success(`Marked ${data.markedCount} notifications as read`);
 
-                // Refresh the page to update unread count in sidebar
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
+                // No page reload needed! State updates automatically
             } else {
                 toast.error('Failed to mark all as read');
             }
@@ -207,8 +204,69 @@ export default function NotificationsPage() {
                     </div>
 
                     {loading ? (
-                        <div className="text-center py-12 text-muted-foreground">
-                            Loading notifications...
+                        <div className="space-y-6">
+                            {/* Critical Skeleton */}
+                            <div>
+                                <div className="h-6 bg-muted rounded w-32 mb-3 animate-pulse" />
+                                <div className="space-y-2">
+                                    {[...Array(2)].map((_, i) => (
+                                        <Card key={i} className="border-red-200 dark:border-red-900">
+                                            <CardHeader className="pb-3">
+                                                <div className="flex items-start gap-3">
+                                                    <div className="h-5 w-5 rounded-full bg-red-100 dark:bg-red-900 animate-pulse" />
+                                                    <div className="flex-1 space-y-2">
+                                                        <div className="h-5 bg-muted rounded w-3/4 animate-pulse" />
+                                                        <div className="h-4 bg-muted rounded w-full animate-pulse" />
+                                                        <div className="h-3 bg-muted rounded w-24 animate-pulse" />
+                                                    </div>
+                                                </div>
+                                            </CardHeader>
+                                        </Card>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Warning Skeleton */}
+                            <div>
+                                <div className="h-6 bg-muted rounded w-32 mb-3 animate-pulse" />
+                                <div className="space-y-2">
+                                    {[...Array(1)].map((_, i) => (
+                                        <Card key={i} className="border-orange-200 dark:border-orange-900">
+                                            <CardHeader className="pb-3">
+                                                <div className="flex items-start gap-3">
+                                                    <div className="h-5 w-5 rounded-full bg-orange-100 dark:bg-orange-900 animate-pulse" />
+                                                    <div className="flex-1 space-y-2">
+                                                        <div className="h-5 bg-muted rounded w-2/3 animate-pulse" />
+                                                        <div className="h-4 bg-muted rounded w-full animate-pulse" />
+                                                        <div className="h-3 bg-muted rounded w-20 animate-pulse" />
+                                                    </div>
+                                                </div>
+                                            </CardHeader>
+                                        </Card>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Info Skeleton */}
+                            <div>
+                                <div className="h-6 bg-muted rounded w-24 mb-3 animate-pulse" />
+                                <div className="space-y-2">
+                                    {[...Array(3)].map((_, i) => (
+                                        <Card key={i}>
+                                            <CardHeader className="pb-3">
+                                                <div className="flex items-start gap-3">
+                                                    <div className="h-5 w-5 rounded-full bg-blue-100 dark:bg-blue-900 animate-pulse" />
+                                                    <div className="flex-1 space-y-2">
+                                                        <div className="h-5 bg-muted rounded w-1/2 animate-pulse" />
+                                                        <div className="h-4 bg-muted rounded w-5/6 animate-pulse" />
+                                                        <div className="h-3 bg-muted rounded w-16 animate-pulse" />
+                                                    </div>
+                                                </div>
+                                            </CardHeader>
+                                        </Card>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     ) : notifications.length === 0 ? (
                         <Card>

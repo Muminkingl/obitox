@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
+import { useSubscription } from '@/contexts/subscription-context'
 import { Button } from '@/components/base/buttons/button'
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
@@ -11,8 +12,11 @@ import { cn } from "@/lib/utils"
 
 export default function BillingPage() {
     const router = useRouter()
-    const [subscriptionData, setSubscriptionData] = React.useState<any>(null)
-    const [loading, setLoading] = React.useState(true)
+
+    // ✅ Use subscription context instead of fetching
+    const { subscription, loading } = useSubscription()
+    const subscriptionData = subscription?.data
+
     const [upgradeLoading, setUpgradeLoading] = React.useState(false)
     const [sortOrder, setSortOrder] = React.useState<'asc' | 'desc'>('desc')
     const [selectedInvoices, setSelectedInvoices] = React.useState<string[]>([])
@@ -61,22 +65,7 @@ export default function BillingPage() {
         router.push('/pricing')
     }
 
-    React.useEffect(() => {
-        const fetchSubscription = async () => {
-            try {
-                const res = await fetch('/api/subscription')
-                const data = await res.json()
-                if (data.success) {
-                    setSubscriptionData(data.data)
-                }
-            } catch (error) {
-                console.error('Failed to fetch subscription:', error)
-            } finally {
-                setLoading(false)
-            }
-        }
-        fetchSubscription()
-    }, [])
+    // ✅ No need to fetch - using SubscriptionContext!
 
     return (
         <div className="max-w-5xl">

@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import { useTheme } from 'next-themes'
+import { usePathname } from 'next/navigation'
 import { Button } from '@/components/base/buttons/button'
 import { Toggle } from '@/components/base/toggle/toggle'
 import {
@@ -22,10 +23,9 @@ export default function AppearancePage() {
     const { theme, setTheme } = useTheme()
     const { settings, updateSettings, resetSettings } = useAppearance()
 
-    // Pending states (not yet saved)
-    const [pendingDisplayMode, setPendingDisplayMode] = React.useState<DisplayPreference>('system')
+    // Draft states (preview only - not yet saved)
+    const [draftDisplayMode, setDraftDisplayMode] = React.useState<DisplayPreference>('system')
     const [pendingTransparentSidebar, setPendingTransparentSidebar] = React.useState(true)
-    const [pendingUserLogo, setPendingUserLogo] = React.useState<string | null>(null)
 
     // Saved states (from localStorage/context)
     const [savedDisplayMode, setSavedDisplayMode] = React.useState<DisplayPreference>('system')
@@ -33,21 +33,19 @@ export default function AppearancePage() {
     // User auth state
     const [userEmail, setUserEmail] = React.useState<string>('')
     const [userAvatarUrl, setUserAvatarUrl] = React.useState<string | null>(null)
+    const [userProvider, setUserProvider] = React.useState<string>('')
 
     // UI states
     const [isLoading, setIsLoading] = React.useState(false)
     const [showSuccess, setShowSuccess] = React.useState(false)
-    const [logoPreview, setLogoPreview] = React.useState<string | null>(null)
 
     // Load initial values from context and auth
     React.useEffect(() => {
         const loadInitialData = async () => {
             // Load appearance settings
-            setPendingDisplayMode(settings.displayPreference)
+            setDraftDisplayMode(settings.displayPreference)
             setSavedDisplayMode(settings.displayPreference)
             setPendingTransparentSidebar(settings.transparentSidebar)
-            setPendingUserLogo(settings.userLogo)
-            setLogoPreview(settings.userLogo)
 
             // Load user data from Supabase
             const supabase = createClient()
@@ -55,48 +53,109 @@ export default function AppearancePage() {
             if (user) {
                 setUserEmail(user.email || '')
                 setUserAvatarUrl(user.user_metadata?.avatar_url || null)
+                setUserProvider(user.app_metadata?.provider || 'account')
             }
         }
         loadInitialData()
     }, [settings])
 
-    // Handle theme changes immediately for preview
+    // Apply draft theme for preview only (ONLY in dashboard!)
+    const pathname = usePathname()
+    const isDashboard = pathname?.startsWith('/dashboard')
+
     React.useEffect(() => {
-        setTheme(pendingDisplayMode)
-    }, [pendingDisplayMode, setTheme])
+        // Only apply theme if we're in the dashboard
+        if (isDashboard) {
+            setTheme(draftDisplayMode)
+        }
+    }, [draftDisplayMode, setTheme, isDashboard])
+
+    // Restore saved theme on unmount if not saved (ONLY in dashboard!)
+    React.useEffect(() => {
+        return () => {
+            if (isDashboard && draftDisplayMode !== savedDisplayMode) {
+                setTheme(savedDisplayMode)
+            }
+        }
+    }, [draftDisplayMode, savedDisplayMode, setTheme, isDashboard])
 
     const handleDisplayModeChange = (mode: DisplayPreference) => {
-        setPendingDisplayMode(mode)
+        setDraftDisplayMode(mode)
     }
 
     const handleCancel = () => {
-        setPendingDisplayMode(savedDisplayMode)
+        setDraftDisplayMode(savedDisplayMode)
         setTheme(savedDisplayMode)
     }
 
-    const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
-        if (file) {
-            const reader = new FileReader()
-            reader.onloadend = () => {
-                const base64 = reader.result as string
-                setLogoPreview(base64)
-                setPendingUserLogo(base64)
+        if (!file) return
+
+        try {
+            setUploadingLogo(true)
+            const supabase = createClient()
+            const { data: { user } } = await supabase.auth.getUser()
+
+            if (!user) {
+                throw new Error('Not authenticated')
             }
-            reader.readAsDataURL(file)
+
+            // DELETE OLD AVATAR FIRST
+            const oldAvatar = user.user_metadata?.avatar_url
+            if (oldAvatar && oldAvatar.includes('user-uploads/avatars/')) {
+                const oldPath = oldAvatar.split('user-uploads/')[1]
+                await supabase.storage.from('user-uploads').remove([oldPath])
+                console.log('✅ Deleted old avatar')
+            }
+
+            // Upload to Supabase Storage
+            const fileExt = file.name.split('.').pop()
+            const fileName = `${user.id}-${Date.now()}.${fileExt}`
+            const filePath = `avatars/${fileName}`
+
+            const { error: uploadError } = await supabase.storage
+                .from('user-uploads')
+                .upload(filePath, file, {
+                    cacheControl: '3600',
+                    upsert: true
+                })
+
+            if (uploadError) throw uploadError
+
+            // Get public URL
+            const { data: { publicUrl } } = supabase.storage
+                .from('user-uploads')
+                .getPublicUrl(filePath)
+
+            // Update user metadata
+            const { error: updateError } = await supabase.auth.updateUser({
+                data: { avatar_url: publicUrl }
+            })
+
+            if (updateError) throw updateError
+
+            // Update local state
+            setUserAvatarUrl(publicUrl)
+            setShowSuccess(true)
+            setTimeout(() => setShowSuccess(false), 3000)
+
+        } catch (error: any) {
+            console.error('Logo upload error:', error)
+            alert('Failed to upload logo: ' + error.message)
+        } finally {
+            setUploadingLogo(false)
         }
     }
 
     const handleResetToDefault = () => {
-        setPendingDisplayMode('system')
+        setDraftDisplayMode('system')
         setPendingTransparentSidebar(true)
         setTheme('system')
 
         // Apply immediately
         resetSettings()
         setSavedDisplayMode('system')
-        setLogoPreview(null)
-        setPendingUserLogo(null)
     }
 
     const handleSave = () => {
@@ -105,14 +164,13 @@ export default function AppearancePage() {
 
         // Simulate save delay
         setTimeout(() => {
-            // Save all settings to localStorage via context
+            // Save settings to localStorage via context
             updateSettings({
-                displayPreference: pendingDisplayMode,
-                transparentSidebar: pendingTransparentSidebar,
-                userLogo: pendingUserLogo
+                displayPreference: draftDisplayMode,
+                transparentSidebar: pendingTransparentSidebar
             })
 
-            setSavedDisplayMode(pendingDisplayMode)
+            setSavedDisplayMode(draftDisplayMode)
             setIsLoading(false)
             setShowSuccess(true)
 
@@ -123,7 +181,7 @@ export default function AppearancePage() {
         }, 800)
     }
 
-    const showCancelButton = pendingDisplayMode !== savedDisplayMode
+    const showCancelButton = draftDisplayMode !== savedDisplayMode
 
     return (
         <div className="max-w-4xl relative">
@@ -150,42 +208,27 @@ export default function AppearancePage() {
                     </div>
                 </div>
 
-                {/* User Logo */}
+                {/* User Avatar (Read-Only) */}
                 <div className="flex items-start justify-between border-b pb-6">
                     <div className="space-y-1">
-                        <h3 className="text-sm font-medium">User logo</h3>
-                        <p className="text-sm text-muted-foreground">Update your personal logo.</p>
+                        <h3 className="text-sm font-medium">User Avatar</h3>
+                        <p className="text-sm text-muted-foreground">
+                            Your avatar from {userProvider}.
+                        </p>
                     </div>
-                    <div className="flex items-center gap-4">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 overflow-hidden bg-background">
-                            {logoPreview || userAvatarUrl ? (
-                                <img
-                                    src={logoPreview || userAvatarUrl || undefined}
-                                    alt="User logo"
-                                    className="h-full w-full object-cover"
-                                />
-                            ) : (
-                                <svg className="h-12 w-12 text-muted-foreground" viewBox="0 0 100 100" fill="none">
-                                    <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="2" fill="none" />
-                                    <path d="M50 20 L50 80 M35 35 L65 35 M35 50 L65 50 M35 65 L65 65" stroke="currentColor" strokeWidth="2" />
-                                </svg>
-                            )}
-                        </div>
-                        <input
-                            type="file"
-                            id="logo-upload"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={handleLogoUpload}
-                        />
-                        <Button
-                            color="outline"
-                            size="md"
-                            onClick={() => document.getElementById('logo-upload')?.click()}
-                        >
-                            <Upload className="h-4 w-4 mr-2" />
-                            Replace logo
-                        </Button>
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 overflow-hidden bg-background">
+                        {userAvatarUrl ? (
+                            <img
+                                src={userAvatarUrl}
+                                alt="User avatar"
+                                className="h-full w-full object-cover"
+                            />
+                        ) : (
+                            <svg className="h-12 w-12 text-muted-foreground" viewBox="0 0 100 100" fill="none">
+                                <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="2" fill="none" />
+                                <path d="M50 20 L50 80 M35 35 L65 35 M35 50 L65 50 M35 65 L65 65" stroke="currentColor" strokeWidth="2" />
+                            </svg>
+                        )}
                     </div>
                 </div>
 
@@ -201,7 +244,7 @@ export default function AppearancePage() {
                         {/* System Preference */}
                         <button
                             onClick={() => handleDisplayModeChange('system')}
-                            className={`group relative overflow-hidden rounded-lg border-2 transition-all ${pendingDisplayMode === 'system'
+                            className={`group relative overflow-hidden rounded-lg border-2 transition-all ${draftDisplayMode === 'system'
                                 ? 'border-primary ring-4 ring-primary/20'
                                 : 'border-border hover:border-muted-foreground/50'
                                 }`}
@@ -244,7 +287,7 @@ export default function AppearancePage() {
                                     </div>
                                 </div>
                             </div>
-                            {pendingDisplayMode === 'system' && (
+                            {draftDisplayMode === 'system' && (
                                 <div className="absolute bottom-3 left-3 flex h-6 w-6 items-center justify-center rounded-full bg-primary">
                                     <svg className="h-4 w-4 text-primary-foreground" viewBox="0 0 16 16" fill="currentColor">
                                         <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z" />
@@ -259,7 +302,7 @@ export default function AppearancePage() {
                         {/* Light Mode */}
                         <button
                             onClick={() => handleDisplayModeChange('light')}
-                            className={`group relative overflow-hidden rounded-lg border-2 transition-all ${pendingDisplayMode === 'light'
+                            className={`group relative overflow-hidden rounded-lg border-2 transition-all ${draftDisplayMode === 'light'
                                 ? 'border-primary ring-4 ring-primary/20'
                                 : 'border-border hover:border-muted-foreground/50'
                                 }`}
@@ -290,7 +333,7 @@ export default function AppearancePage() {
                                     </div>
                                 </div>
                             </div>
-                            {pendingDisplayMode === 'light' && (
+                            {draftDisplayMode === 'light' && (
                                 <div className="absolute bottom-3 left-3 flex h-6 w-6 items-center justify-center rounded-full bg-primary">
                                     <svg className="h-4 w-4 text-primary-foreground" viewBox="0 0 16 16" fill="currentColor">
                                         <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z" />
@@ -305,7 +348,7 @@ export default function AppearancePage() {
                         {/* Dark Mode */}
                         <button
                             onClick={() => handleDisplayModeChange('dark')}
-                            className={`group relative overflow-hidden rounded-lg border-2 transition-all ${pendingDisplayMode === 'dark'
+                            className={`group relative overflow-hidden rounded-lg border-2 transition-all ${draftDisplayMode === 'dark'
                                 ? 'border-primary ring-4 ring-primary/20'
                                 : 'border-border hover:border-muted-foreground/50'
                                 }`}
@@ -340,7 +383,7 @@ export default function AppearancePage() {
                                     </div>
                                 </div>
                             </div>
-                            {pendingDisplayMode === 'dark' && (
+                            {draftDisplayMode === 'dark' && (
                                 <div className="absolute bottom-3 left-3 flex h-6 w-6 items-center justify-center rounded-full bg-primary">
                                     <svg className="h-4 w-4 text-primary-foreground" viewBox="0 0 16 16" fill="currentColor">
                                         <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z" />
