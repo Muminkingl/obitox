@@ -35,17 +35,21 @@ export default function DogfoodingPage() {
                         The bugs we find are your bugs
                     </h2>
                     <p className="leading-7 text-neutral-300">
-                        <strong className="text-white">Real example 1:</strong> Supabase signed URLs were taking 3311ms. Unacceptable.
-                        We added multi-layer caching (memory → Redis → DB). Now it's 848ms (74% faster). We documented the fix in GitHub with benchmarks.
+                        <strong className="text-white">Real example 1:</strong> Our rate limiter was taking 707ms per request. We analyzed Redis call patterns,
+                        found 4 sequential calls, and refactored into a single mega-pipeline. Now it's 186ms (74% faster).
                     </p>
                     <p className="leading-7 text-neutral-300 mt-4">
-                        <strong className="text-white">Real example 2:</strong> During testing, we got mass account creation attacks (someone scripted 500 fake signups).
-                        Our rate limiter broke. We rebuilt it with 9 security layers: email verification, disposable domain blocking, per-tier quotas, abuse event logging.
+                        <strong className="text-white">Real example 2:</strong> Our signature validator was making a database query on every request (213ms).
+                        We cached the secret hash in the API key middleware. Now it takes 0-1ms (99.5% faster).
+                    </p>
+                    <p className="leading-7 text-neutral-300 mt-4">
+                        <strong className="text-white">Real example 3:</strong> During testing, we got mass account creation attacks (someone scripted 500 fake signups).
+                        Our rate limiter broke. We rebuilt it with 6 security layers: per-tier quotas, abuse event logging.
                         Now it survives DDoS attempts.
                     </p>
                     <p className="leading-7 text-neutral-300 mt-4">
                         <strong className="text-white">Real example 3:</strong> Batch operations were slow because we validated each file individually.
-                        We refactored to parallel validation. 100 files now validates in ~50ms instead of 5 seconds.
+                        We refactored to parallel validation. 100 files now validates in ~800-1000ms instead of 5 seconds.
                     </p>
                     <p className="leading-7 text-neutral-300 mt-4">
                         We don't find these problems in a test suite. We find them <strong className="text-white">when we're trying to ship our own features</strong> and the API pisses us off.
@@ -57,17 +61,25 @@ export default function DogfoodingPage() {
                         Performance numbers aren't marketing claims
                     </h2>
                     <p className="leading-7 text-neutral-300">
-                        We publish response times because <strong className="text-white">we need them to be fast for our own apps</strong>:
+                        We publish response times because <strong className="text-white">we need them to be fast for our own apps</strong>.
+                        These are real numbers from our production benchmarks:
                     </p>
-                    <ul className="list-disc list-inside space-y-2 text-neutral-300 leading-7 ml-4">
-                        <li>R2 signed URL: 5-15ms (we tested this on Iraq home WiFi—it's real)</li>
-                        <li>Vercel signed URL: 200-300ms (external API, can't avoid network latency)</li>
-                        <li>Supabase signed URL: 848ms → 1161ms depending on cache hits</li>
-                        <li>Uploadcare signed URL: 639ms → 536ms cached</li>
-                    </ul>
+                    <div className="bg-neutral-900 border border-neutral-800 p-4 rounded-lg font-mono text-sm text-neutral-300 mt-4">
+                        <div className="text-neutral-500 mb-2">// Crypto signing time (pure computation)</div>
+                        <div>R2 (Cloudflare): <span className="text-green-400">4-12ms</span></div>
+                        <div>S3 (AWS): <span className="text-green-400">5-15ms</span></div>
+                        <div className="mt-3 text-neutral-500">// Full API response (includes auth + rate limiting)</div>
+                        <div>Vercel Blob: <span className="text-yellow-400">200-300ms</span> (external API)</div>
+                        <div>Supabase: <span className="text-yellow-400">375-450ms</span> (multi-layer cache)</div>
+                        <div>Uploadcare: <span className="text-yellow-400">350-500ms</span> (external API)</div>
+                    </div>
                     <p className="leading-7 text-neutral-300 mt-4">
-                        If a provider is slower than expected, we <strong className="text-white">optimize or switch providers</strong>.
-                        We don't just shrug and pass the cost to you.
+                        The difference? <strong className="text-white">Crypto signing is pure math</strong>—it happens in 5-15ms regardless of network.
+                        Full API response includes authentication, rate limiting, quota checks, and your network latency.
+                    </p>
+                    <p className="leading-7 text-neutral-300 mt-2">
+                        If a provider is slower than expected, we <strong className="text-white">optimize aggressively</strong>.
+                        
                     </p>
                 </section>
 
@@ -101,11 +113,6 @@ export default function DogfoodingPage() {
                         Generating a new signed URL for every access was overkill. We built JWT-based tokens that work across all providers.
                     </p>
                     <p className="leading-7 text-neutral-300 mt-4">
-                        <strong className="text-white">Domain verification:</strong> We needed to send emails from our own domain using Resend.
-                        The DNS setup was confusing. We built a verification system with clear instructions, copy buttons, and automatic checks.
-                        Now it's part of the product.
-                    </p>
-                    <p className="leading-7 text-neutral-300 mt-4">
                         We're not "imagining use cases." <strong className="text-white">We're solving our own problems and sharing the solutions.</strong>
                     </p>
                 </section>
@@ -134,7 +141,7 @@ export default function DogfoodingPage() {
 }`}
                     </div>
                     <p className="leading-7 text-neutral-300 mt-4">
-                        We write errors like this because <strong className="text-white">we got stuck debugging "Invalid credentials" at 2am</strong>
+                        We write errors like this because <strong className="text-white">we got stuck debugging "Invalid credentials" at 2am </strong>
                         and swore we'd never inflict that on anyone else.
                     </p>
                 </section>

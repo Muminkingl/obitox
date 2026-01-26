@@ -31,15 +31,11 @@ export default function WhatWeBelievePage() {
                         Read the code, not the promises
                     </h2>
                     <p className="leading-7 text-neutral-300">
-                        Our rate limiter isn't "enterprise-grade" because we said so. It has <strong className="text-white">9 security layers</strong>: 
-                        Cloudflare DDoS protection → Arcjet bot detection → API key validation → memory guards → Redis rate limits → quota enforcement → email verification → domain validation → abuse logging.
+                        Our rate limiter isn't "enterprise-grade" because we said so. It has <strong className="text-white">7 security layers</strong>: 
+                        Cloudflare DDoS protection → Arcjet bot detection → API key validation → memory guards → Redis rate limits → quota enforcement → abuse logging.
                     </p>
                     <p className="leading-7 text-neutral-300">
                         We didn't build this to impress VCs. We built it because we got mass-account-creation attacks during testing and needed something that wouldn't fall over.
-                    </p>
-                    <p className="leading-7 text-neutral-300">
-                        The domain verification system logs every attempt, blocks disposable emails, enforces per-tier quotas, and runs DNS checks in a background cron job 
-                        (not on-demand, so you can't spam our DNS provider with 1000 verify clicks).
                     </p>
                 </section>
 
@@ -51,15 +47,11 @@ export default function WhatWeBelievePage() {
                         Free tier: 1,000 requests/month. Why? Because you can test properly with ~300 uploads, but you can't run production and abuse it.
                     </p>
                     <p className="leading-7 text-neutral-300">
-                        Pro tier: $9/month for 50,000 requests. Why not $5? Because $5 feels toy-ish. Why not $19? Because we're not paying for your bandwidth—you are.
+                        Pro tier: $24/month for 50,000 requests.
                     </p>
                     <p className="leading-7 text-neutral-300">
                         We charge for <strong className="text-white">operations</strong> (signed URLs, analytics, security), not storage or traffic. 
-                        Cloudinary charges $99/month minimum because they host your files. We charge $9 because we don't.
-                    </p>
-                    <p className="leading-7 text-neutral-300">
-                        Infrastructure cost per user: $0 until ~200 users (we're on Cloudflare/Supabase/Redis free tiers). 
-                        Profit margin: 98%+ even after upgrading to paid tiers. That's why we can be this cheap without going broke.
+                        Cloudinary charges $99/month minimum because they host your files. We charge $24 because we don't.
                     </p>
                 </section>
 
@@ -85,16 +77,13 @@ export default function WhatWeBelievePage() {
                     </h2>
                     <p className="leading-7 text-neutral-300">
                         Our batch operations count as 1 request (100 files = 1 API call). This is extremely efficient, but it means you could theoretically 
-                        game the system by batching everything. We limit it: Free tier gets 10 files/batch, Pro gets 100, Enterprise gets 10,000.
+                        game the system by batching everything. We limit it: Free tier gets 5 files/batch, Pro gets 100, Enterprise gets CUSTOM.
                     </p>
                     <p className="leading-7 text-neutral-300">
-                        Response times: 20-30ms cached, 400-600ms on cold starts. We don't say "instant" — that's lying. 
+                        Response times: 200-300ms cached, 700-900ms on cold starts. We don't say "instant" — that's lying. 
                         We say <strong className="text-white">"faster than proxying data through servers"</strong> and show the math.
                     </p>
-                    <p className="leading-7 text-neutral-300">
-                        Free tier abuse: Yes, someone could create 100 accounts and get 100,000 free requests. 
-                        We detect this with email verification, IP tracking, and abuse event logging. It's not perfect, but we're not pretending it's unsolvable.
-                    </p>
+                 
                 </section>
             </div>
 

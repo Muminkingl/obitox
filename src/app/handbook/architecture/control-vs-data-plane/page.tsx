@@ -191,7 +191,7 @@ Your browser → Our API (for permissions only)
                                     <strong>Total cost: $17/month</strong>
                                 </div>
                                 <div className="text-red-400 mt-2">
-                                    To be profitable at $9/mo price: IMPOSSIBLE<br />
+                                    To be profitable at $24/mo price: IMPOSSIBLE<br />
                                     Actual price needed: $99/month minimum (hello, Cloudinary)
                                 </div>
                             </div>
@@ -209,7 +209,7 @@ Your browser → Our API (for permissions only)
                                     <strong>Total cost: $0/month</strong>
                                 </div>
                                 <div className="text-green-400 mt-2">
-                                    Revenue at $9/mo × 1,000 users: $9,000/month<br />
+                                    Revenue at $24/mo × 1,000 users: $24,000/month<br />
                                     Profit margin: <strong>100%</strong> 🔥
                                 </div>
                             </div>
@@ -222,11 +222,11 @@ Your browser → Our API (for permissions only)
                         100GB bandwidth: 100 × $0.00 = <strong className="text-white">$0/month</strong> (R2 has no egress fees)
                     </p>
                     <p className="leading-7 text-neutral-300 mt-4">
-                        Combined cost: <strong className="text-white">$9 (us) + $1.50 (R2) = $10.50/month</strong><br />
+                        Combined cost: <strong className="text-white">$24 (us) + $1.50 (R2) = $25.50/month</strong><br />
                         vs Cloudinary: <strong className="text-white">$99/month minimum</strong>
                     </p>
                     <p className="leading-7 text-neutral-300 mt-4">
-                        <strong className="text-white">You save $88.50/month by bringing your own storage.</strong>
+                        <strong className="text-white">You save $73.50/month by bringing your own storage.</strong>
                     </p>
                 </section>
 

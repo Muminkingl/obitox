@@ -24,15 +24,12 @@ export default function HowWeMakeMoneyPage() {
                     </ul>
                     <p className="leading-7 text-neutral-300 mt-4">
                         We pay for <strong className="text-white">none of that</strong>. Your files go from your browser directly to your R2/Vercel/Supabase account. 
-                        We generate signed URLs (pure cryptography, 5-15ms), track requests in Redis, and log analytics in Supabase.
+                        We generate signed URLs, track requests in Redis, and log analytics.
                     </p>
+                   
                     <p className="leading-7 text-neutral-300">
-                        Cost per user: <strong className="text-white">$0</strong> until we hit ~200 users. Why? Cloudflare gives 1M free requests/month. 
-                        Supabase gives 500MB DB + 2GB bandwidth free. Redis (Upstash) gives 10k commands/day free.
-                    </p>
-                    <p className="leading-7 text-neutral-300">
-                        At 100 Pro users ($9 each), we're making $900/month with $0 infrastructure cost. That's a <strong className="text-white">100% profit margin</strong>. 
-                        Even after upgrading to paid tiers at scale, margins stay above 98%.
+                      At 100 Pro users ($24 each), we're making $2,400/month with $0 infrastructure cost. That's a <strong className="text-white">100% profit margin</strong>.    
+Even after upgrading to paid tiers at scale, margins stay above 98%.
                     </p>
                 </section>
 
@@ -44,7 +41,7 @@ export default function HowWeMakeMoneyPage() {
                         You're not paying us to host files. You're paying for:
                     </p>
                     <ul className="list-disc list-inside space-y-2 text-neutral-300 leading-7 ml-4">
-                        <li><strong className="text-white">One API</strong> that works with 4 providers (more coming)</li>
+                        <li><strong className="text-white">One API</strong> that works with 5 providers (more coming)</li>
                         <li><strong className="text-white">Security</strong> that took 4 weeks to build (rate limiting, abuse prevention, email verification)</li>
                         <li><strong className="text-white">Batch operations</strong> (100 files in 1 API call vs 100 separate requests)</li>
                         <li><strong className="text-white">JWT tokens</strong> for access control without exposing storage URLs</li>
@@ -52,8 +49,8 @@ export default function HowWeMakeMoneyPage() {
                         <li><strong className="text-white">Not having to wire this together yourself</strong> (3 weeks of work, minimum)</li>
                     </ul>
                     <p className="leading-7 text-neutral-300 mt-4">
-                        Free tier: 1,000 requests/month (~300 uploads). Good for testing, not production abuse.<br />
-                        Pro tier: $9/month for 50,000 requests (~15,000 uploads). Cloudinary charges $99/month and starts counting GBs.<br />
+                        Free tier: 1,000 requests/month (~300 uploads). Good for testing, not production.<br />
+                        Pro tier: $24/month for 50,000 requests (~15,000 uploads). Cloudinary charges $99/month and starts counting GBs.<br />
                         Enterprise: Custom pricing because you're probably hitting 10M+ requests and need dedicated support.
                     </p>
                 </section>
@@ -64,9 +61,9 @@ export default function HowWeMakeMoneyPage() {
                     </h2>
                     <p className="leading-7 text-neutral-300">
                         <strong className="text-white">Scenario 1:</strong> 100 Pro users<br />
-                        Revenue: $900/month<br />
+                        Revenue: $2,400/month<br />
                         Infrastructure: $0 (free tier)<br />
-                        Profit: $900 (100% margin)
+                        Profit: $2,400 (100% margin)
                     </p>
                     <p className="leading-7 text-neutral-300 mt-4">
                         <strong className="text-white">Scenario 2:</strong> 500 users (mix of Free/Pro/Enterprise)<br />
@@ -103,7 +100,7 @@ export default function HowWeMakeMoneyPage() {
                         Why? Great DX, but they're a hosting company. Bandwidth is their cost center.
                     </p>
                     <p className="leading-7 text-neutral-300 mt-4">
-                        <strong className="text-white">ObitoX:</strong> $9/month for 50,000 operations<br />
+                        <strong className="text-white">ObitoX:</strong> $24/month for 50,000 operations<br />
                         Why? <strong className="text-white">We don't touch your files.</strong> You bring R2 ($0.015/GB), we generate URLs (5-15ms crypto operation). 
                         Your bandwidth costs are ~$5-10/month for 1TB. Our costs are API calls (nearly free at scale).
                     </p>
@@ -114,7 +111,7 @@ export default function HowWeMakeMoneyPage() {
                         The catch (there's always one)
                     </h2>
                     <p className="leading-7 text-neutral-300">
-                        You manage your own storage credentials. We don't hold your R2/Vercel/Supabase API keys in a dashboard—you pass them in each request.
+                        You manage your own storage credentials. We don't hold your R2/Vercel/Supabase API keys in a dashboard you pass them in each request.
                     </p>
                     <p className="leading-7 text-neutral-300">
                         This means:

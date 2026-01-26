@@ -7,7 +7,7 @@ export default function PerformancePhilosophyPage() {
                 <h1 className="scroll-m-20 text-4xl font-normal tracking-tight lg:text-5xl font-serif mb-8 text-neutral-100">
                     Performance Philosophy
                 </h1>
-                
+
                 <section className="space-y-6">
                     <h2 className="text-xl font-bold tracking-tight text-white">
                         Fast is not a feeling, it's a number
@@ -27,39 +27,39 @@ export default function PerformancePhilosophyPage() {
                     <div className="bg-neutral-900 border border-neutral-800 p-6 rounded-lg space-y-4">
                         <div className="grid grid-cols-2 gap-4 text-sm">
                             <div>
-                                <div className="text-neutral-500 mb-1">R2 Signed URL</div>
-                                <div className="text-green-400 font-bold">5-15ms</div>
-                                <div className="text-neutral-400 text-xs mt-1">Pure crypto, no network call</div>
+                                <div className="text-neutral-500 mb-1">R2 Signed URL (Full Trip)</div>
+                                <div className="text-green-400 font-bold">760ms - 1.2s</div>
+                                <div className="text-neutral-400 text-xs mt-1">Includes network from Home WiFi + API overhead</div>
                             </div>
                             <div>
-                                <div className="text-neutral-500 mb-1">API Key Check (cached)</div>
-                                <div className="text-green-400 font-bold">10-30ms</div>
-                                <div className="text-neutral-400 text-xs mt-1">Redis lookup, 95% hit rate</div>
+                                <div className="text-neutral-500 mb-1">API Key & Rate Limit</div>
+                                <div className="text-green-400 font-bold">186ms</div>
+                                <div className="text-neutral-400 text-xs mt-1">Single Redis mega-pipeline (was 707ms)</div>
+                            </div>
+                            <div>
+                                <div className="text-neutral-500 mb-1">Crypto Signing Only</div>
+                                <div className="text-green-400 font-bold">4-12ms</div>
+                                <div className="text-neutral-400 text-xs mt-1">Internal server processing time</div>
                             </div>
                             <div>
                                 <div className="text-neutral-500 mb-1">Supabase Signed URL</div>
-                                <div className="text-yellow-400 font-bold">848ms-1161ms</div>
-                                <div className="text-neutral-400 text-xs mt-1">External API, network latency</div>
-                            </div>
-                            <div>
-                                <div className="text-neutral-500 mb-1">Vercel Blob Signed URL</div>
-                                <div className="text-yellow-400 font-bold">200-300ms</div>
-                                <div className="text-neutral-400 text-xs mt-1">External API call required</div>
+                                <div className="text-yellow-400 font-bold">848ms - 1.1s</div>
+                                <div className="text-neutral-400 text-xs mt-1">Dependent on Supabase API latency</div>
                             </div>
                             <div>
                                 <div className="text-neutral-500 mb-1">Uploadcare Signed URL</div>
-                                <div className="text-yellow-400 font-bold">639ms</div>
+                                <div className="text-yellow-400 font-bold">530ms</div>
                                 <div className="text-neutral-400 text-xs mt-1">External API call</div>
                             </div>
                             <div>
                                 <div className="text-neutral-500 mb-1">Batch Upload (100 files)</div>
-                                <div className="text-green-400 font-bold">400-500ms</div>
-                                <div className="text-neutral-400 text-xs mt-1">Parallel processing, R2 provider</div>
+                                <div className="text-green-400 font-bold">~800ms</div>
+                                <div className="text-neutral-400 text-xs mt-1">Parallel validation enabled</div>
                             </div>
                         </div>
                     </div>
                     <p className="leading-7 text-neutral-300 mt-4">
-                        <strong className="text-white">Tested where:</strong> Iraq home WiFi (worst case), production servers (best case).<br />
+                        <strong className="text-white">Tested where:</strong> Home WiFi (worst case), production servers (best case).<br />
                         <strong className="text-white">Methodology:</strong> P95 (95th percentile) over 1,000 requests.<br />
                         <strong className="text-white">Honesty:</strong> If it's slow, we say it's slow. Supabase is 848ms because their API is in a different region. We can't fix that.
                     </p>
@@ -83,7 +83,7 @@ export default function PerformancePhilosophyPage() {
                                 <strong className="text-white">Our architecture:</strong> File → Storage (direct, 0× our bandwidth, 0× our latency)
                             </p>
                             <p className="leading-7 text-neutral-300 mt-2">
-                                We generate a signed URL (5-15ms crypto). Your browser uploads directly to R2/Vercel/Supabase. 
+                                We generate a signed URL (5-15ms crypto). Your browser uploads directly to R2/Vercel/Supabase.
                                 <strong className="text-white"> We're not in the file path, so we can't be the bottleneck.</strong>
                             </p>
                         </div>
@@ -95,23 +95,19 @@ export default function PerformancePhilosophyPage() {
                             </p>
                             <div className="bg-neutral-900 border border-neutral-800 p-4 rounded-lg mt-2">
                                 <pre className="text-neutral-300 text-sm">
-{`Memory cache (NodeCache):
-├─ Hit: 0-2ms (instant)
-├─ Miss: Fallback to Redis
-└─ Hit rate: 70% (70% of requests never leave memory)
+                                    {`Redis Mega-Pipeline (Upstash):
+├─ 1. Get API Key & Tier
+├─ 2. Get Quota Status
+├─ 3. Check Rate Limits
+└─ Total time: 186ms (1 round trip)
 
-Redis cache (Upstash):
-├─ Hit: 5-15ms (global replication)
-├─ Miss: Fallback to database
-└─ Hit rate: 95% (95% of requests never hit DB)
+Before Optimization:
+├─ 4 separate Redis calls
+└─ Total time: 707ms (4 round trips)
 
 Database (Supabase):
-├─ Query: 20-50ms
-├─ Only on cache miss
-└─ Result cached for 5 minutes
-
-Combined hit rate: 99.5% of requests are cached
-Database load: 0.5% of actual traffic`}
+├─ Only hit on cache MISS
+└─ < 1% of requests touch DB`}
                                 </pre>
                             </div>
                         </div>
@@ -119,25 +115,21 @@ Database load: 0.5% of actual traffic`}
                         <div>
                             <h3 className="text-lg font-bold text-white mb-2">3. Edge deployment (275+ locations)</h3>
                             <p className="leading-7 text-neutral-300">
-                                Cloudflare Workers run in 275+ cities. Request from Tokyo? It hits Tokyo, not Virginia.
+                                Run where the user is. Redis is global. Cloudflare (upcoming) is global.
                             </p>
                             <div className="bg-neutral-900 border border-neutral-800 p-4 rounded-lg mt-2">
                                 <div className="grid grid-cols-2 gap-4 text-sm">
                                     <div>
                                         <div className="text-neutral-500">Region</div>
-                                        <div className="text-neutral-300 mt-1">US/Canada</div>
-                                        <div className="text-neutral-300">Europe</div>
-                                        <div className="text-neutral-300">Asia</div>
-                                        <div className="text-neutral-300">Middle East</div>
-                                        <div className="text-neutral-300">Africa</div>
+                                        <div className="text-neutral-300 mt-1">Our Server (Node.js)</div>
+                                        <div className="text-neutral-300">Redis (Global)</div>
+                                        <div className="text-neutral-300">Supabase (US-East)</div>
                                     </div>
                                     <div>
-                                        <div className="text-neutral-500">Latency</div>
-                                        <div className="text-green-400 mt-1">10-30ms</div>
-                                        <div className="text-green-400">15-40ms</div>
-                                        <div className="text-yellow-400">20-60ms</div>
-                                        <div className="text-yellow-400">30-80ms</div>
-                                        <div className="text-yellow-400">40-100ms</div>
+                                        <div className="text-neutral-500">Latency impact</div>
+                                        <div className="text-green-400 mt-1">Fast Processing</div>
+                                        <div className="text-green-400">Low Latency</div>
+                                        <div className="text-yellow-400">Network Dependent</div>
                                     </div>
                                 </div>
                             </div>
@@ -153,7 +145,7 @@ Database load: 0.5% of actual traffic`}
                             </p>
                             <div className="bg-neutral-900 border border-neutral-800 p-4 rounded-lg mt-2">
                                 <pre className="text-neutral-300 text-sm">
-{`import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+                                    {`import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 // This is crypto (5-10ms), not an API call:
 const url = await getSignedUrl(s3Client, putCommand, {
@@ -168,7 +160,7 @@ const { url } = await put('file.jpg', file, {
                                 </pre>
                             </div>
                             <p className="leading-7 text-neutral-300 mt-4">
-                                This is why R2 signed URLs are <strong className="text-white">40× faster</strong> than Vercel Blob. 
+                                This is why R2 signed URLs are <strong className="text-white">40× faster</strong> than Vercel Blob.
                                 We're not making network calls—just signing with your credentials locally.
                             </p>
                         </div>
@@ -180,7 +172,7 @@ const { url } = await put('file.jpg', file, {
                             </p>
                             <div className="bg-neutral-900 border border-neutral-800 p-4 rounded-lg mt-2">
                                 <pre className="text-neutral-300 text-sm">
-{`// Return response immediately (15ms)
+                                    {`// Return response immediately (15ms)
 return res.json({ uploadUrl, publicUrl });
 
 // Queue background jobs (non-blocking, 0ms to user)
@@ -203,7 +195,7 @@ queueMetricsUpdate({
                             </p>
                             <div className="bg-neutral-900 border border-neutral-800 p-4 rounded-lg mt-2">
                                 <pre className="text-neutral-300 text-sm">
-{`// BAD: Sequential (100 files × 5ms = 500ms)
+                                    {`// BAD: Sequential (100 files × 5ms = 500ms)
 for (const file of files) {
   await generateSignedUrl(file); // Blocks!
 }
@@ -236,14 +228,10 @@ const urls = await Promise.all(
                         Fix: Warm caches (5min TTL), so 95% of requests are fast.
                     </p>
 
-                    <p className="leading-7 text-neutral-300 mt-4">
-                        <strong className="text-white">Domain verification: 5-10 seconds</strong><br />
-                        Why: DNS lookups take time (checking MX records, TXT records, CNAME records).<br />
-                        Fix: Background cron job (every 15min), not on-demand. User doesn't wait.
-                    </p>
+                   
 
                     <p className="leading-7 text-neutral-300 mt-4">
-                        We're honest about this. If something is slow, <strong className="text-white">we say it's slow and explain why</strong>. 
+                        We're honest about this. If something is slow, <strong className="text-white">we say it's slow and explain why</strong>.
                         We don't hide behind "optimizing" or "coming soon."
                     </p>
                 </section>
@@ -257,18 +245,16 @@ const urls = await Promise.all(
                     </p>
                     <div className="bg-neutral-900 border border-neutral-800 p-4 rounded-lg mt-4">
                         <pre className="text-neutral-300 text-sm">
-{`{
+                            {`{
   "requestId": "r2_1234567890",
   "timing": {
-    "total": 15,
-    "memoryGuard": 2,
-    "redisCheck": 10,
-    "cryptoSign": 5,
-    "response": 0
+    "total": 186,
+    "pipeline": 170,
+    "cryptoSign": 12,
+    "overhead": 4
   },
   "cacheHits": {
-    "memory": true,
-    "redis": true,
+    "pipeline": true,
     "db": false
   }
 }`}
@@ -284,7 +270,7 @@ const urls = await Promise.all(
                         <li><strong className="text-white">Max</strong> — Worst case (usually cold cache + slow provider)</li>
                     </ul>
                     <p className="leading-7 text-neutral-300 mt-4">
-                        We publish P95 because it's honest. P50 looks better but hides the slow requests. 
+                        We publish P95 because it's honest. P50 looks better but hides the slow requests.
                         P99 includes weird outliers (network hiccups, cold starts). <strong className="text-white">P95 is what most users experience.</strong>
                     </p>
                 </section>
@@ -324,8 +310,8 @@ const urls = await Promise.all(
                         <li><strong className="text-white">Pure crypto scales</strong> — Signing URLs is CPU-bound, Workers have plenty of CPU</li>
                     </ul>
                     <p className="leading-7 text-neutral-300 mt-4">
-                        At 10,000 concurrent requests, we'd probably hit Supabase connection limits (~100 concurrent connections). 
-                        Solution: <strong className="text-white">Connection pooling</strong> (PgBouncer) + more aggressive caching. 
+                        At 10,000 concurrent requests, we'd probably hit Supabase connection limits (~100 concurrent connections).
+                        Solution: <strong className="text-white">Connection pooling</strong> (PgBouncer) + more aggressive caching.
                         We'll cross that bridge when we get there.
                     </p>
                 </section>
@@ -341,19 +327,13 @@ const urls = await Promise.all(
 
                     <p className="leading-7 text-neutral-300 mt-4">
                         <strong className="text-white">2. Your internet connection</strong><br />
-                        If uploading a 10MB file takes 30 seconds, that's your bandwidth, not our API. 
+                        If uploading a 10MB file takes 30 seconds, that's your bandwidth, not our API.
                         We generated the signed URL in 15ms. The other 29.985 seconds is between you and R2.
                     </p>
 
                     <p className="leading-7 text-neutral-300 mt-4">
-                        <strong className="text-white">3. DNS propagation</strong><br />
-                        Domain verification requires DNS records to propagate (can take 5 min - 48 hours depending on provider). 
-                        We check every 15 minutes. We can't speed up DNS—that's the internet.
-                    </p>
-
-                    <p className="leading-7 text-neutral-300 mt-4">
-                        <strong className="text-white">4. Storage provider performance</strong><br />
-                        R2 is fast (~50-200ms uploads). Vercel Blob is slower (~200-400ms). Supabase Storage varies (100-500ms). 
+                        <strong className="text-white">3. Storage provider performance</strong><br />
+                        R2 is fast (~50-200ms uploads). Vercel Blob is slower (~200-400ms). Supabase Storage varies (100-500ms).
                         We don't control this—you choose the provider.
                     </p>
                 </section>
@@ -389,7 +369,7 @@ const urls = await Promise.all(
                         </li>
                     </ul>
                     <p className="leading-7 text-neutral-300 mt-4">
-                        But honestly: <strong className="text-white">5-15ms for R2 is already fast enough</strong>. 
+                        But honestly: <strong className="text-white">5-15ms for R2 is already fast enough</strong>.
                         We're not going to obsess over shaving 2ms when the real bottleneck is network latency or file size.
                     </p>
                 </section>
@@ -400,12 +380,12 @@ const urls = await Promise.all(
                     </h2>
                     <p className="leading-7 text-neutral-300">
                         <strong className="text-white">
-                            Don't put files in the critical path, cache everything you can, measure what you can't, 
+                            Don't put files in the critical path, cache everything you can, measure what you can't,
                             and be honest about what you can't control.
                         </strong>
                     </p>
                     <p className="leading-7 text-neutral-300 mt-4">
-                        That's it. No "blazing fast," no "lightning speed," no meaningless comparisons. 
+                        That's it. No "blazing fast," no "lightning speed," no meaningless comparisons.
                         Just <strong className="text-white">real numbers, real architecture decisions, and real honesty about tradeoffs.</strong>
                     </p>
                 </section>

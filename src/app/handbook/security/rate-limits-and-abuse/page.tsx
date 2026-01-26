@@ -36,7 +36,7 @@ export default function RateLimitsPage() {
                             </div>
                             <div>
                                 <div className="text-neutral-500 mb-2">Enterprise</div>
-                                <div className="text-green-400">Unlimited</div>
+                                <div className="text-green-400">Custom</div>
                             </div>
                         </div>
                         <div className="mt-4 pt-4 border-t border-neutral-700 grid grid-cols-2 gap-4 text-sm">
@@ -285,15 +285,15 @@ export default function RateLimitsPage() {
                     </h2>
                     <div className="space-y-4">
                         <div className="bg-yellow-900/10 border border-yellow-500/20 p-4 rounded-lg">
-                            <div className="text-yellow-400 font-bold mb-2">⚠️ At 80% usage:</div>
+                            <div className="text-yellow-400 font-bold mb-2">⚠️ At 50% usage:</div>
                             <div className="text-neutral-300 text-sm">
-                                Email warning: "You've used 800/1,000 requests this month"<br />
+                                Email warning: "You've used 500/1,000 requests this month"<br />
                                 Dashboard banner: Shows usage with upgrade prompt
                             </div>
                         </div>
 
                         <div className="bg-orange-900/10 border border-orange-500/20 p-4 rounded-lg">
-                            <div className="text-orange-400 font-bold mb-2">⚠️ At 95% usage:</div>
+                            <div className="text-orange-400 font-bold mb-2">⚠️ At 80% usage:</div>
                             <div className="text-neutral-300 text-sm">
                                 Urgent email: "You're about to hit your limit"<br />
                                 Dashboard: Red banner with countdown

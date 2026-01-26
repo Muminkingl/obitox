@@ -16,6 +16,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { verifyWebhookSignature } from '@/lib/verify-webhook-signature';
 import { NextRequest, NextResponse } from 'next/server';
+import { generateInvoice } from '@/lib/invoices/generate-invoice';
+
 
 // Use service role for webhook (bypasses RLS)
 const supabase = createClient(
@@ -131,13 +133,15 @@ export async function POST(req: NextRequest) {
             }
 
             // Update user account (atomic operation)
+            // ✅ SMART EXPIRATION: Use subscription_tier_paid (not subscription_tier)
             const { error: updateError } = await supabase
                 .from('profiles')
                 .update({
-                    subscription_tier: plan.tier,
-                    api_requests_limit: plan.api_requests_limit,
+                    subscription_tier_paid: plan.tier,  // ← What they PAID for
+                    subscription_status: 'active',      // ← Explicitly active
                     billing_cycle_start: now.toISOString(),
                     billing_cycle_end: cycleEnd.toISOString()
+                    // ❌ REMOVED: api_requests_limit (now comes from profiles_with_tier view)
                 })
                 .eq('id', transaction.user_id);
 
@@ -171,6 +175,33 @@ export async function POST(req: NextRequest) {
                 }
             });
 
+            // ✅ INVOICE GENERATION: Auto-create invoice for completed payment
+            try {
+                // Use ORIGINAL USD price from plan (not IQD amount from transaction)
+                const usdPriceCents = transaction.billing_cycle === 'yearly'
+                    ? plan.yearly_price_usd || 0
+                    : plan.monthly_price_usd || 0;
+
+                await generateInvoice({
+                    transactionId: transaction.id,
+                    userId: transaction.user_id,
+                    planName: plan.name || plan.tier, // e.g., "Pro Plan"
+                    billingCycle: transaction.billing_cycle,
+                    amount: usdPriceCents, // USD cents (e.g., 2400 = $24.00)
+                    currency: 'USD', // Always USD for invoices
+                    tax: 0,
+                    discount: 0,
+                    billingAddress: { country: 'US' }
+                });
+
+
+                console.log(`[WEBHOOK] ✅ Invoice generated for transaction ${transaction.id}`);
+            } catch (invoiceError: any) {
+                // Log but don't fail the payment if invoice fails
+                console.error('[WEBHOOK] Invoice generation failed:', invoiceError);
+                // Invoice can be regenerated later if needed
+            }
+
             // ✅ FIX #5: Comprehensive logging (success)
             console.log('[WEBHOOK] Processed successfully:', {
                 referenceId,
@@ -180,6 +211,7 @@ export async function POST(req: NextRequest) {
                 plan: plan.tier,
                 processingTimeMs: Date.now() - startTime
             });
+
 
         } else if (['Cancelled', 'Rejected'].includes(status)) {
             // Mark transaction as failed

@@ -33,11 +33,13 @@ export async function POST(request: NextRequest) {
         }
 
         // Get user's subscription tier
+        // ✅ SMART EXPIRATION: Use profiles_with_tier for computed tier
         const { data: profile } = await supabase
-            .from('profiles')
+            .from('profiles_with_tier')  // ← Using computed view!
             .select('subscription_tier')
             .eq('id', user.id)
             .single();
+
 
         const tier = (profile?.subscription_tier || 'free') as keyof typeof DIFFICULTY_BY_TIER;
         const difficulty = DIFFICULTY_BY_TIER[tier];

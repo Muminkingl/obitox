@@ -16,18 +16,18 @@ import { subscriptionRateLimit } from '@/lib/rate-limit';
 
 export async function GET(request: NextRequest) {
     const startTime = Date.now();
-    
+
     try {
         // 1. Rate limiting (10 requests per 60 seconds)
-        const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 
-                   request.headers.get('x-real-ip') || 
-                   '::1';
+        const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+            request.headers.get('x-real-ip') ||
+            '::1';
 
         console.log(`[SUBSCRIPTION] Request from IP: ${ip}`);
 
         // Check rate limit (no try-catch here - let errors propagate)
         const rateLimitResult = await subscriptionRateLimit.check(ip);
-        
+
         console.log(`[SUBSCRIPTION] Rate limit result:`, {
             success: rateLimitResult.success,
             remaining: rateLimitResult.remaining
@@ -36,9 +36,9 @@ export async function GET(request: NextRequest) {
         // Block if rate limited
         if (!rateLimitResult.success) {
             const retryAfter = Math.ceil((rateLimitResult.reset - Date.now()) / 1000);
-            
+
             console.log(`[SUBSCRIPTION] ❌ BLOCKED - Rate limit exceeded`);
-            
+
             return NextResponse.json(
                 {
                     success: false,
@@ -71,19 +71,26 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        // 3. Optimized queries - Fetch profile with subscription plan in ONE query
+        // 3. ✅ SMART EXPIRATION: Use profiles_with_tier view for computed tier
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('profiles_with_tier')  // ← Using computed view!
             .select(`
                 id,
                 subscription_tier,
+                subscription_tier_paid,
+                subscription_status,
+                is_subscription_expired,
+                is_in_grace_period,
+                days_until_expiration,
                 api_requests_used,
                 api_requests_limit,
                 billing_cycle_start,
-                billing_cycle_end
+                billing_cycle_end,
+                plan_name
             `)
             .eq('id', user.id)
             .single();
+
 
         if (profileError || !profile) {
             console.error('Profile fetch error:', profileError);
@@ -196,7 +203,7 @@ export async function GET(request: NextRequest) {
 
     } catch (error: any) {
         console.error('[SUBSCRIPTION] API error:', error);
-        
+
         // Return 500 for any errors (including rate limit errors)
         return NextResponse.json(
             { success: false, error: 'Internal server error' },

@@ -7,7 +7,7 @@ export default function SystemOverviewPage() {
                 <h1 className="scroll-m-20 text-4xl font-normal tracking-tight lg:text-5xl font-serif mb-8 text-neutral-100">
                     System Overview
                 </h1>
-                
+
                 <section className="space-y-6">
                     <h2 className="text-xl font-bold tracking-tight text-white">
                         What we actually built
@@ -16,7 +16,7 @@ export default function SystemOverviewPage() {
                         ObitoX is an API that generates signed URLs. That's it. That's the core product.
                     </p>
                     <p className="leading-7 text-neutral-300">
-                        Everything else—rate limiting, analytics, batch operations, JWT tokens—exists to make that core operation 
+                        Everything else—rate limiting, analytics, batch operations, JWT tokens—exists to make that core operation
                         <strong className="text-white"> fast, secure, and not exploitable</strong>.
                     </p>
                 </section>
@@ -28,19 +28,19 @@ export default function SystemOverviewPage() {
                     <div className="bg-neutral-900 border border-neutral-800 p-6 rounded-lg space-y-4 font-mono text-sm">
                         <div className="text-neutral-400">// Request Flow:</div>
                         <div className="text-neutral-300">
-                            1. Your app calls: <span className="text-green-400">POST /api/upload/r2/signed-url</span>
+                            1. Your app calls: <span className="text-green-400">POST /api/v1/upload/r2/signed-url</span>
                         </div>
                         <div className="text-neutral-300 ml-4">
                             ├─ Cloudflare: DDoS protection (0-10ms)
                         </div>
                         <div className="text-neutral-300 ml-4">
-                            ├─ Workers: API key validation (10-30ms)
+                            ├─ Express: API key validation (5-10ms cached)
                         </div>
                         <div className="text-neutral-300 ml-4">
-                            ├─ Memory: Rate limit check (2ms)
+                            ├─ Redis: Rate limit check (186ms mega-pipeline)
                         </div>
                         <div className="text-neutral-300 ml-4">
-                            ├─ Redis: Quota check (15ms)
+                            ├─ Redis: Quota check (included in pipeline)
                         </div>
                         <div className="text-neutral-300 ml-4">
                             ├─ Crypto: Generate signed URL (5-10ms)
@@ -68,10 +68,10 @@ export default function SystemOverviewPage() {
                         Where it runs
                     </h2>
                     <p className="leading-7 text-neutral-300">
-                        <strong className="text-white">Backend:</strong> Cloudflare Workers (275+ edge locations globally)<br />
+                        <strong className="text-white">Backend:</strong> Node.js + Express (moving to Cloudflare Workers)<br />
                         <strong className="text-white">Database:</strong> Supabase (PostgreSQL with PostgREST)<br />
-                        <strong className="text-white">Cache:</strong> Redis via Upstash (global replication)<br />
-                        <strong className="text-white">Files:</strong> Your R2/Vercel/Supabase account (we don't store anything)
+                        <strong className="text-white">Cache:</strong> Redis (Upstash-compatible)<br />
+                        <strong className="text-white">Files:</strong> Your R2/Vercel/Supabase/S3 account (we don't store anything)
                     </p>
                     <p className="leading-7 text-neutral-300 mt-4">
                         We're not "serverless" because it sounds cool. We're serverless because:
@@ -94,7 +94,7 @@ export default function SystemOverviewPage() {
                     <div className="bg-neutral-900 border border-neutral-800 p-6 rounded-lg space-y-3 mt-4">
                         <div className="text-neutral-400 text-sm font-mono">// Your request:</div>
                         <pre className="text-neutral-300 text-sm overflow-x-auto">
-{`POST https://api.obitox.com/v1/upload/r2/signed-url
+                            {`POST https://your-api.com/api/v1/upload/r2/signed-url
 Headers:
   Authorization: Bearer YOUR_API_KEY
   Content-Type: application/json
@@ -147,7 +147,7 @@ Body:
                     <div className="bg-neutral-900 border border-neutral-800 p-6 rounded-lg space-y-3 mt-6">
                         <div className="text-neutral-400 text-sm font-mono">// Our response (15ms later):</div>
                         <pre className="text-neutral-300 text-sm overflow-x-auto">
-{`{
+                            {`{
   "success": true,
   "uploadUrl": "https://account.r2.cloudflarestorage.com/...",
   "publicUrl": "https://pub-account.r2.dev/upl1704672000_a3f2b9.jpg",
@@ -163,7 +163,7 @@ Body:
                     </p>
                     <div className="bg-neutral-900 border border-neutral-800 p-6 rounded-lg space-y-3 mt-4">
                         <pre className="text-neutral-300 text-sm overflow-x-auto">
-{`// In your browser/app:
+                            {`// In your browser/app:
 const response = await fetch(data.uploadUrl, {
   method: 'PUT',
   body: fileBlob,
@@ -183,7 +183,7 @@ const response = await fetch(data.uploadUrl, {
                     </h2>
                     <p className="leading-7 text-neutral-300">
                         <strong className="text-white">1. No network calls to storage providers</strong><br />
-                        We use cryptographic signing (AWS SDK v3). Generating an R2 signed URL doesn't require asking R2 for permission—we have your credentials, 
+                        We use cryptographic signing (AWS SDK v3). Generating an R2 signed URL doesn't require asking R2 for permission—we have your credentials,
                         we sign the URL, done. <strong className="text-white">5-10ms of pure math</strong>, no HTTP requests.
                     </p>
                     <p className="leading-7 text-neutral-300 mt-4">
@@ -231,7 +231,7 @@ const response = await fetch(data.uploadUrl, {
                     </h2>
                     <p className="leading-7 text-neutral-300">
                         <strong className="text-white">1. Your credentials never leave your requests</strong><br />
-                        We don't store your R2/Vercel/Supabase credentials in a database. You pass them in each request body. 
+                        We don't store your R2/Vercel/Supabase credentials in a database. You pass them in each request body.
                         We use them to generate URLs, then discard them. No credential leaks possible from our side.
                     </p>
 
@@ -250,13 +250,13 @@ const response = await fetch(data.uploadUrl, {
 
                     <p className="leading-7 text-neutral-300 mt-4">
                         <strong className="text-white">4. Email verification required</strong><br />
-                        Before you can create domains or hit advanced features, we verify your email. 
+                        Before you can create domains or hit advanced features, we verify your email.
                         Blocks disposable emails, tracks abuse patterns, forces real identity.
                     </p>
 
                     <p className="leading-7 text-neutral-300 mt-4">
                         <strong className="text-white">5. Abuse event logging</strong><br />
-                        Every suspicious action is logged: rate limit hits, invalid credentials, quota exceeded, failed verifications. 
+                        Every suspicious action is logged: rate limit hits, invalid credentials, quota exceeded, failed verifications.
                         After 10 abuse events, we flag the account. After 50, we suspend it.
                     </p>
                 </section>
@@ -287,7 +287,7 @@ const response = await fetch(data.uploadUrl, {
                         <li>
                             <strong className="text-white">We don't guarantee 100% uptime</strong><br />
                             <span className="text-sm text-neutral-400">
-                                We aim for 99.9% (8.7 hours downtime/year). If Cloudflare goes down, we go down. If Supabase goes down, some features degrade. 
+                                We aim for 99.9% (8.7 hours downtime/year). If Cloudflare goes down, we go down. If Supabase goes down, some features degrade.
                                 Enterprise tier gets 99.95% SLA with dedicated support.
                             </span>
                         </li>

@@ -84,15 +84,18 @@ export async function POST() {
         billingCycleEnd.setMonth(billingCycleEnd.getMonth() + 1);
 
         // 6. Update user profile with new plan (atomic transaction)
+        // ✅ SMART EXPIRATION: Use subscription_tier_paid (not subscription_tier)
         const { error: updateError } = await supabase
             .from('profiles')
             .update({
-                subscription_tier: pendingTransaction.plan,
-                api_requests_limit: planData.api_requests_per_month,
+                subscription_tier_paid: pendingTransaction.plan,  // ← What they PAID for
+                subscription_status: 'active',                    // ← Explicitly active
                 billing_cycle_start: billingCycleStart.toISOString(),
                 billing_cycle_end: billingCycleEnd.toISOString(),
+                // ❌ REMOVED: api_requests_limit (now from profiles_with_tier view)
             })
             .eq('id', user.id);
+
 
         if (updateError) {
             console.error('Failed to update user profile:', updateError);

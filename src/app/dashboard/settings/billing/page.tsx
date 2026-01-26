@@ -21,16 +21,36 @@ export default function BillingPage() {
     const [sortOrder, setSortOrder] = React.useState<'asc' | 'desc'>('desc')
     const [selectedInvoices, setSelectedInvoices] = React.useState<string[]>([])
 
-    // Mock Data
-    const invoices = [
-        { id: '1', plan: 'Basic Plan', month: 'Dec 2025', amount: 'USD $10.00', date: 'Dec 1, 2025', status: 'Paid' },
-        { id: '2', plan: 'Basic Plan', month: 'Nov 2025', amount: 'USD $10.00', date: 'Nov 1, 2025', status: 'Paid' },
-        { id: '3', plan: 'Basic Plan', month: 'Oct 2025', amount: 'USD $10.00', date: 'Oct 1, 2025', status: 'Paid' },
-        { id: '4', plan: 'Basic Plan', month: 'Sep 2025', amount: 'USD $10.00', date: 'Sep 1, 2025', status: 'Paid' },
-        { id: '5', plan: 'Basic Plan', month: 'Aug 2025', amount: 'USD $10.00', date: 'Aug 1, 2025', status: 'Paid' },
-        { id: '6', plan: 'Basic Plan', month: 'Jul 2025', amount: 'USD $10.00', date: 'Jul 1, 2025', status: 'Paid' },
-        { id: '7', plan: 'Basic Plan', month: 'Jun 2025', amount: 'USD $10.00', date: 'Jun 1, 2025', status: 'Paid' },
-    ]
+    // ✅ LIVE DATA: Fetch real invoices from API
+    const [invoices, setInvoices] = React.useState<any[]>([])
+
+    React.useEffect(() => {
+        const fetchInvoices = async () => {
+            try {
+                const response = await fetch('/api/invoices?limit=50')
+                if (!response.ok) throw new Error('Failed to fetch')
+
+                const data = await response.json()
+                if (data.success) {
+                    // Transform API data to match UI format
+                    const transformed = data.invoices.map((inv: any) => ({
+                        id: inv.id,
+                        plan: inv.plan_name,
+                        month: new Date(inv.invoice_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+                        amount: `${inv.currency} $${inv.total.toFixed(2)}`,
+                        date: new Date(inv.invoice_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                        status: inv.status.charAt(0).toUpperCase() + inv.status.slice(1),
+                        invoice_number: inv.invoice_number
+                    }))
+                    setInvoices(transformed)
+                }
+            } catch (error) {
+                console.error('[BILLING] Failed to fetch invoices:', error)
+                setInvoices([])
+            }
+        }
+        fetchInvoices()
+    }, [])
 
     const toggleSort = () => {
         setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')
@@ -242,7 +262,29 @@ export default function BillingPage() {
                                                 </BadgeWithDot>
                                             </td>
                                             <td className="px-6 py-4 text-right">
-                                                <Button color="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground">
+                                                <Button
+                                                    color="ghost"
+                                                    size="sm"
+                                                    className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                                                    onClick={async () => {
+                                                        try {
+                                                            const response = await fetch(`/api/invoices/${invoice.id}/download`)
+                                                            if (!response.ok) throw new Error('Download failed')
+                                                            const blob = await response.blob()
+                                                            const url = window.URL.createObjectURL(blob)
+                                                            const a = document.createElement('a')
+                                                            a.href = url
+                                                            a.download = `invoice-${invoice.invoice_number}.pdf`
+                                                            document.body.appendChild(a)
+                                                            a.click()
+                                                            window.URL.revokeObjectURL(url)
+                                                            document.body.removeChild(a)
+                                                        } catch (error) {
+                                                            console.error('[BILLING] Download failed:', error)
+                                                            alert('Failed to download invoice')
+                                                        }
+                                                    }}
+                                                >
                                                     <Download className="h-4 w-4" />
                                                 </Button>
                                             </td>

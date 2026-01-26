@@ -18,27 +18,29 @@ export async function getUserSubscription(userId: string): Promise<UserSubscript
     return null;
   }
 
+  // ✅ SMART EXPIRATION: Use profiles_with_tier view for computed tier
   const { data, error } = await supabase
-    .from('profiles')
-    .select('subscription_tier, subscription_start_date, trial_ends_at')
+    .from('profiles_with_tier')  // ← Using computed view!
+    .select('subscription_tier, is_subscription_expired, days_until_expiration')
     .eq('id', userId)
     .single();
+
 
   if (error || !data) {
     console.error('Error fetching user subscription:', error);
     return null;
   }
 
-  const trialEndsAt = data.trial_ends_at ? new Date(data.trial_ends_at) : null;
-  const now = new Date();
-  const isInTrial = trialEndsAt ? now < trialEndsAt : false;
+  // ✅ is_subscription_expired comes from the computed view
+  const isExpired = data.is_subscription_expired || false;
 
   return {
     plan: (data.subscription_tier || 'free') as SubscriptionPlan,
-    trialEndsAt,
-    isInTrial
+    trialEndsAt: null,  // No longer using trial system
+    isInTrial: false
   };
 }
+
 
 export async function getApiKeyLimit(userId: string): Promise<number> {
   const subscription = await getUserSubscription(userId);

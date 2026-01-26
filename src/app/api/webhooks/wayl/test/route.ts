@@ -17,6 +17,58 @@ const supabase = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+// GET handler for easy browser testing - creates a test transaction and processes it
+export async function GET(req: NextRequest) {
+    if (!IS_DEV) {
+        return NextResponse.json({ error: 'Test endpoint disabled in production' }, { status: 403 });
+    }
+
+    try {
+        // Get a user to create test transaction for
+        const { data: user } = await supabase.auth.getUser();
+
+        // Get a random pending transaction OR create a mock one
+        const { data: pendingTx } = await supabase
+            .from('billing_transactions')
+            .select('*')
+            .eq('status', 'pending')
+            .limit(1)
+            .single();
+
+        if (!pendingTx) {
+            return NextResponse.json({
+                error: 'No pending transaction found',
+                hint: 'First go to /pricing and click upgrade to create a payment link, then come back here.',
+                instructions: [
+                    '1. Go to http://localhost:3000/pricing',
+                    '2. Click "Get Started with Pro" or "Upgrade Plan"',
+                    '3. Copy the referenceId from the response or URL',
+                    '4. Come back here or POST to this endpoint with: {"referenceId": "YOUR_REF_ID", "status": "Complete"}'
+                ]
+            }, { status: 404 });
+        }
+
+        // Simulate webhook with the pending transaction
+        console.log('[TEST WEBHOOK GET] Found pending transaction:', pendingTx.wayl_reference_id);
+
+        // Create internal request to POST handler
+        const mockRequest = new Request(req.url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                referenceId: pendingTx.wayl_reference_id,
+                status: 'Complete'
+            })
+        });
+
+        return POST(mockRequest as NextRequest);
+
+    } catch (error: any) {
+        console.error('[TEST WEBHOOK GET ERROR]', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+}
+
 export async function POST(req: NextRequest) {
     if (!IS_DEV) {
         return NextResponse.json({ error: 'Test endpoint disabled in production' }, { status: 403 });
@@ -78,15 +130,18 @@ export async function POST(req: NextRequest) {
             }
 
             // Update user profile
+            // ✅ SMART EXPIRATION: Use subscription_tier_paid (not subscription_tier)
             const { error: updateError } = await supabase
                 .from('profiles')
                 .update({
-                    subscription_tier: plan.tier,
-                    api_requests_limit: plan.api_requests_monthly,
+                    subscription_tier_paid: plan.tier,  // ← What they PAID for
+                    subscription_status: 'active',      // ← Explicitly active
                     billing_cycle_start: now.toISOString(),
                     billing_cycle_end: cycleEnd.toISOString()
+                    // ❌ REMOVED: api_requests_limit (now from profiles_with_tier view)
                 })
                 .eq('id', transaction.user_id);
+
 
             if (updateError) {
                 console.error('[TEST WEBHOOK] Failed to update profile:', updateError);
@@ -124,7 +179,38 @@ export async function POST(req: NextRequest) {
                 console.log('[TEST WEBHOOK] Audit log created for account_upgraded');
             }
 
+            // ✅ INVOICE GENERATION: Auto-create invoice for completed payment
+            let invoiceCreated = false;
+            try {
+                const { generateInvoice } = await import('@/lib/invoices/generate-invoice');
+
+                // Use ORIGINAL USD price from plan (not IQD amount from transaction)
+                const usdPriceCents = transaction.billing_cycle === 'yearly'
+                    ? plan.yearly_price_usd || 0
+                    : plan.monthly_price_usd || 0;
+
+
+                await generateInvoice({
+                    transactionId: transaction.id,
+                    userId: transaction.user_id,
+                    planName: plan.name || plan.tier, // e.g., "Pro Plan"
+                    billingCycle: transaction.billing_cycle,
+                    amount: usdPriceCents, // USD cents (e.g., 2400 = $24.00)
+                    currency: 'USD', // Always USD for invoices
+                    tax: 0,
+                    discount: 0,
+                    billingAddress: { country: 'US' }
+                });
+
+
+                invoiceCreated = true;
+                console.log(`[TEST WEBHOOK] ✅ Invoice generated for transaction ${transaction.id}`);
+            } catch (invoiceError: any) {
+                console.error('[TEST WEBHOOK] Invoice generation failed:', invoiceError);
+            }
+
             // Get updated profile
+
             const { data: updatedProfile } = await supabase
                 .from('profiles')
                 .select('subscription_tier, api_requests_limit, billing_cycle_start, billing_cycle_end')
@@ -146,6 +232,7 @@ export async function POST(req: NextRequest) {
                     status: 'completed',
                     plan: plan.tier,
                     billingCycle: transaction.billing_cycle,
+                    invoiceCreated,
                     updatedProfile
                 }
             });
