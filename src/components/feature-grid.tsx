@@ -49,7 +49,7 @@ export default function FeatureGrid() {
                                                         <span className="text-sm font-bold text-purple-600">2</span>
                                                     </div>
                                                     <p className="text-sm text-muted-foreground leading-relaxed">
-                                                        <strong className="text-foreground">We return the URL</strong> - your browser/app now has a secure upload endpoint (47ms total)
+                                                        <strong className="text-foreground">We return the URL</strong> - your browser/app now has a secure upload endpoint (140ms total)
                                                     </p>
                                                 </div>
                                                 <div className="flex items-start gap-3">
@@ -57,20 +57,13 @@ export default function FeatureGrid() {
                                                         <span className="text-sm font-bold text-green-600">3</span>
                                                     </div>
                                                     <p className="text-sm text-muted-foreground leading-relaxed">
-                                                        <strong className="text-foreground">File uploads DIRECTLY to your cloud</strong> - R2, S3, Vercel, etc. (bypasses us completely)
+                                                        <strong className="text-foreground">File uploads DIRECTLY to your cloud</strong> - R2, S3, etc. (bypasses us completely)
                                                     </p>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        {/* Verify it yourself */}
-                                        <div className="p-4 bg-muted/50 border border-border rounded-lg">
-                                            <p className="text-sm text-muted-foreground leading-relaxed">
-                                                <code className="text-primary font-mono">{'</>'}</code> <strong className="text-foreground">Verify it yourself:</strong> Open Network tab in your browser.
-                                                File uploads go to <code className="px-2 py-1 bg-background rounded text-primary text-xs font-mono">*.r2.cloudflarestorage.com</code>,
-                                                <strong className="text-foreground"> NOT</strong> to <code className="px-2 py-1 bg-background rounded text-xs font-mono">api.obitox.com</code>
-                                            </p>
-                                        </div>
+
                                     </div>
 
                                     {/* Right: Visual diagram */}
@@ -125,7 +118,7 @@ export default function FeatureGrid() {
                                             {/* Stats */}
                                             <div className="grid grid-cols-2 gap-3 pt-2">
                                                 <div className="p-3 bg-muted/50 rounded-md text-center">
-                                                    <div className="text-2xl font-bold text-primary">47ms</div>
+                                                    <div className="text-2xl font-bold text-primary">140ms</div>
                                                     <div className="text-xs text-muted-foreground">API response</div>
                                                 </div>
                                                 <div className="p-3 bg-muted/50 rounded-md text-center">
@@ -153,7 +146,7 @@ export default function FeatureGrid() {
                                     <div className="space-y-2">
                                         <h2 className="text-lg font-medium">Zero Vendor Lock-In</h2>
                                         <p className="text-sm text-muted-foreground leading-relaxed">
-                                            Switch between R2, S3, Vercel Blob, or Supabase
+                                            Switch between R2, S3, or Supabase
                                             by changing one environment variable. Your code stays untouched.
                                         </p>
                                     </div>
@@ -222,7 +215,7 @@ export default function FeatureGrid() {
                                                 <div className="absolute inset-0 animate-ping rounded-full bg-primary/20" />
                                             </div>
                                             <div className="flex flex-col gap-1">
-                                                <span className="text-xs font-mono font-medium text-primary">47ms</span>
+                                                <span className="text-xs font-mono font-medium text-primary">140ms</span>
                                                 <div className="h-1 w-12 rounded-full bg-primary/30">
                                                     <div className="h-full w-4/5 rounded-full bg-primary" />
                                                 </div>
@@ -292,7 +285,7 @@ export default function FeatureGrid() {
                                 <div className="relative z-10 mt-6 space-y-2 text-center">
                                     <h2 className="text-lg font-medium">Lightning Fast</h2>
                                     <p className="text-sm text-muted-foreground leading-relaxed">
-                                        Multi-layer caching delivers signed URLs in under 50ms.
+                                        Multi-layer caching delivers signed URLs in under 150ms.
                                         Your users won't even notice the API call.
                                     </p>
                                 </div>

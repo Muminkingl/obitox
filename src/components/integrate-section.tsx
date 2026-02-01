@@ -53,8 +53,11 @@ export default async (req) => {
   const client = new ObitoX(env.OBITOX_KEY);
   
   return await client.upload(req.file, {
-    provider: 'vercel',
-    vercelToken: env.VERCEL_BLOB_TOKEN
+    provider: 'r2',
+    r2AccessKey: env.R2_ACCESS_KEY,
+    r2SecretKey: env.R2_SECRET_KEY,
+    r2AccountId: env.R2_ACCOUNT_ID,
+    r2Bucket: 'uploads'
   });
 };`
     },
@@ -89,8 +92,11 @@ client = Client(api_key="your_api_key")
 
 result = client.upload(
     file=file,
-    provider="vercel",
-    vercel_token="your_vercel_blob_token"
+    provider: 'r2',
+    r2AccessKey: env.R2_ACCESS_KEY,
+    r2SecretKey: env.R2_SECRET_KEY,
+    r2AccountId: env.R2_ACCOUNT_ID,
+    r2Bucket: 'uploads'
 )
 
 print(result.url)  # Done! ✓`

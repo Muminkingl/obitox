@@ -59,7 +59,7 @@ export default function HeroSection() {
                                 <div className="mx-auto mt-8 max-w-2xl">
                                     <TypewriterTitle
                                         sequences={[
-                                            { text: "S3, Cloudflare R2, GCS, Vercel Blob, anywhere", deleteAfter: true, pauseAfter: 2500 },
+                                            { text: "S3, Cloudflare R2, GCS, DigitalOcean, anywhere", deleteAfter: true, pauseAfter: 2500 },
                                             { text: "Switch clouds without touching your code", deleteAfter: true, pauseAfter: 2500 },
                                             { text: "Upload once. Works everywhere.", deleteAfter: true, pauseAfter: 2500 },
                                         ]}
@@ -111,10 +111,7 @@ export default function HeroSection() {
                                             <span className="text-primary font-bold">✓</span>
                                             <span>1,000 free requests/month</span>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-primary font-bold">✓</span>
-                                            <span>All providers included</span>
-                                        </div>
+                                        
                                         <div className="flex items-center gap-2">
                                             <span className="text-primary font-bold">✓</span>
                                             <span>No credit card required</span>

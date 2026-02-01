@@ -54,18 +54,39 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
             setLoading(true);
             setError(null);
 
-            console.log('[SUBSCRIPTION CONTEXT] Fetching subscription data...');
+            console.log('[SUBSCRIPTION CONTEXT] Checking authentication...');
 
-            const response = await fetch('/api/subscription');
+            // Check if user is authenticated first
+            const response = await fetch('/api/auth/session');
 
             if (!response.ok) {
-                if (response.status === 429) {
-                    throw new Error('Too many requests. Please wait a moment.');
-                }
-                throw new Error(`Failed to fetch subscription: ${response.status}`);
+                console.log('[SUBSCRIPTION CONTEXT] ⚠️ Not authenticated, skipping subscription fetch');
+                setSubscription(null);
+                setLoading(false);
+                return;
             }
 
-            const data = await response.json();
+            const sessionData = await response.json();
+
+            if (!sessionData?.user) {
+                console.log('[SUBSCRIPTION CONTEXT] ⚠️ No user session, skipping subscription fetch');
+                setSubscription(null);
+                setLoading(false);
+                return;
+            }
+
+            console.log('[SUBSCRIPTION CONTEXT] ✅ Authenticated, fetching subscription data...');
+
+            const subscriptionResponse = await fetch('/api/subscription');
+
+            if (!subscriptionResponse.ok) {
+                if (subscriptionResponse.status === 429) {
+                    throw new Error('Too many requests. Please wait a moment.');
+                }
+                throw new Error(`Failed to fetch subscription: ${subscriptionResponse.status}`);
+            }
+
+            const data = await subscriptionResponse.json();
 
             console.log('[SUBSCRIPTION CONTEXT] ✅ Data loaded successfully');
             setSubscription(data);

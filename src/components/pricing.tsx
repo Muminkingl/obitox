@@ -114,9 +114,8 @@ export default function SimplePricing() {
       return;
     }
 
-    // Enterprise: contact sales
     if (planId === 'enterprise') {
-      window.location.href = '/contact';
+      window.location.href = '/enterprise';
       return;
     }
 

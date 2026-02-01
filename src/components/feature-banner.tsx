@@ -11,7 +11,7 @@ export default function FeatureBanner() {
                     </h2>
                     <p className="mt-6 text-lg text-muted-foreground leading-relaxed">
                         Stop wrestling with provider SDKs. One unified API to upload files
-                        to R2, Vercel Blob, Supabase, or Uploadcare. Switch providers
+                        to R2, Supabase, or Uploadcare. Switch providers
                         without touching your code. That's the power of ObitoX.
                     </p>
                 </div>

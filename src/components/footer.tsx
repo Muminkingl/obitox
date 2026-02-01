@@ -7,16 +7,13 @@ const links = [
         items: [
             {
                 title: 'Features',
-                href: '#',
+                href: '#features',
             },
             {
                 title: 'Solution',
-                href: '#',
+                href: '#solution',
             },
-            {
-                title: 'Customers',
-                href: '#',
-            },
+
             {
                 title: 'Pricing',
                 href: '/pricing',
@@ -31,68 +28,7 @@ const links = [
             },
         ],
     },
-    {
-        group: 'Solution',
-        items: [
-            {
-                title: 'Startup',
-                href: '#',
-            },
-            {
-                title: 'Freelancers',
-                href: '#',
-            },
-            {
-                title: 'Organizations',
-                href: '#',
-            },
-            {
-                title: 'Students',
-                href: '#',
-            },
-            {
-                title: 'Collaboration',
-                href: '#',
-            },
-            {
-                title: 'Design',
-                href: '#',
-            },
-            {
-                title: 'Management',
-                href: '#',
-            },
-        ],
-    },
-    {
-        group: 'Company',
-        items: [
-            {
-                title: 'About',
-                href: '#',
-            },
-            {
-                title: 'Careers',
-                href: '#',
-            },
-            {
-                title: 'Blog',
-                href: '#',
-            },
-            {
-                title: 'Press',
-                href: '#',
-            },
-            {
-                title: 'Contact',
-                href: '#',
-            },
-            {
-                title: 'Help',
-                href: '#',
-            },
-        ],
-    },
+
     {
         group: 'Handbook',
         items: [
@@ -101,24 +37,24 @@ const links = [
                 href: '/handbook/company/why-we-exist',
             },
             {
-                title: 'How we work',
-                href: '/handbook/company/how-we-work',
+                title: 'What we believe',
+                href: '/handbook/company/what-we-believe',
             },
             {
-                title: 'Engineering',
-                href: '/handbook/engineering',
+                title: 'How we make money',
+                href: '/handbook/company/how-we-make-money',
             },
             {
-                title: 'Design',
-                href: '/handbook/design',
+                title: 'Request signing',
+                href: '/handbook/security/request-signing',
             },
             {
-                title: 'Success',
-                href: '/handbook/success',
+                title: 'Rate limits & abuse',
+                href: '/handbook/security/rate-limits-and-abuse',
             },
             {
-                title: 'Marketing',
-                href: '/handbook/marketing',
+                title: 'Performance',
+                href: '/handbook/architecture/performance-philosophy',
             },
         ],
     },
@@ -127,19 +63,19 @@ const links = [
         items: [
             {
                 title: 'Licence',
-                href: '#',
+                href: '/legal/licence',
             },
             {
                 title: 'Privacy',
-                href: '#',
+                href: '/legal/privacy',
             },
             {
                 title: 'Cookies',
-                href: '#',
+                href: '/legal/cookies',
             },
             {
                 title: 'Security',
-                href: '#',
+                href: '/legal/security',
             },
         ],
     },

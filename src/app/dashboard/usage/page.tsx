@@ -45,8 +45,6 @@ interface UsageData {
   bandwidth: number;
   apiCalls: number;
   successRate: number;
-  providers: { [key: string]: number };
-  fileTypes: { [key: string]: number };
 }
 
 interface ProviderData {
