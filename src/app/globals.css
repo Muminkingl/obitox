@@ -125,3 +125,71 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Fumadocs-style variables for docs-new */
+:root {
+  --fd-background: hsl(0 0% 100%);
+  --fd-foreground: hsl(0 0% 3.9%);
+  --fd-primary: hsl(240 5.9% 10%);
+  --fd-primary-foreground: hsl(0 0% 98%);
+  --fd-secondary: hsl(240 4.8% 95.9%);
+  --fd-muted-foreground: hsl(240 3.8% 46.1%);
+  --fd-accent: hsl(240 4.8% 95.9%);
+  --fd-border: hsl(240 5.9% 90%);
+}
+
+.dark {
+  --fd-background: hsl(240 10% 3.9%);
+  --fd-foreground: hsl(0 0% 98%);
+  --fd-primary: hsl(0 0% 98%);
+  --fd-primary-foreground: hsl(240 5.9% 10%);
+  --fd-secondary: hsl(240 3.7% 15.9%);
+  --fd-muted-foreground: hsl(240 5% 64.9%);
+  --fd-accent: hsl(240 3.7% 15.9%);
+  --fd-border: hsl(240 3.7% 15.9%);
+}
+
+/* Fumadocs utility classes */
+.bg-fd-background {
+  background-color: var(--fd-background);
+}
+
+.bg-fd-primary {
+  background-color: var(--fd-primary);
+}
+
+.bg-fd-secondary {
+  background-color: var(--fd-secondary);
+}
+
+.bg-fd-accent {
+  background-color: var(--fd-accent);
+}
+
+.text-fd-foreground {
+  color: var(--fd-foreground);
+}
+
+.text-fd-primary {
+  color: var(--fd-primary);
+}
+
+.text-fd-primary-foreground {
+  color: var(--fd-primary-foreground);
+}
+
+.text-fd-muted-foreground {
+  color: var(--fd-muted-foreground);
+}
+
+.border-fd-border {
+  border-color: var(--fd-border);
+}
+
+.hover\:text-fd-foreground:hover {
+  color: var(--fd-foreground);
+}
+
+.hover\:bg-fd-accent:hover {
+  background-color: var(--fd-accent);
+}
