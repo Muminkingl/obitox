@@ -19,6 +19,37 @@ const tree = {
             name: 'Installation',
             url: '/docs-new/installation',
         },
+        {
+            type: 'page' as const,
+            name: 'Quick Start',
+            url: '/docs-new/quick-start',
+        },
+        {
+            type: 'folder' as const,
+            name: 'Providers',
+            children: [
+                {
+                    type: 'page' as const,
+                    name: 'Amazon S3',
+                    url: '/docs-new/providers/s3',
+                },
+                {
+                    type: 'page' as const,
+                    name: 'Cloudflare R2',
+                    url: '/docs-new/providers/r2',
+                },
+                {
+                    type: 'page' as const,
+                    name: 'Supabase',
+                    url: '/docs-new/providers/supabase',
+                },
+                {
+                    type: 'page' as const,
+                    name: 'Uploadcare',
+                    url: '/docs-new/providers/uploadcare',
+                },
+            ],
+        },
     ],
 };
 
