@@ -51,6 +51,9 @@ export async function GET(req: NextRequest) {
         // Simulate webhook with the pending transaction
         console.log('[TEST WEBHOOK GET] Found pending transaction:', pendingTx.wayl_reference_id);
 
+
+
+
         // Create internal request to POST handler
         const mockRequest = new Request(req.url, {
             method: 'POST',

@@ -1,36 +1,58 @@
-import { DocsSidebar } from "@/components/docs/docs-sidebar";
-import { DocsToc } from "@/components/docs/docs-toc";
-import { Metadata } from "next";
+'use client';
 
-export const metadata: Metadata = {
-    title: "Introduction - Docus",
-    description: "Welcome to Docus theme documentation",
+import type { ReactNode } from 'react';
+import { DocsLayout } from 'fumadocs-ui/layouts/docs';
+import { baseOptions } from '@/lib/fumadocs/layout.shared';
+import 'fumadocs-ui/style.css';
+
+// Properly formatted tree structure following Fumadocs Page Tree conventions
+const tree = {
+    name: 'Docs',
+    children: [
+        {
+            type: 'page' as const,
+            name: 'Introduction',
+            url: '/docs',
+        },
+        {
+            type: 'page' as const,
+            name: 'Installation',
+            url: '/docs/installation',
+        },
+
+        {
+            type: 'folder' as const,
+            name: 'Providers',
+            children: [
+                {
+                    type: 'page' as const,
+                    name: 'S3',
+                    url: '/docs/providers/s3',
+                },
+                {
+                    type: 'page' as const,
+                    name: 'Cloudflare R2',
+                    url: '/docs/providers/r2',
+                },
+                {
+                    type: 'page' as const,
+                    name: 'Supabase',
+                    url: '/docs/providers/supabase',
+                },
+                {
+                    type: 'page' as const,
+                    name: 'Uploadcare',
+                    url: '/docs/providers/uploadcare',
+                },
+            ],
+        },
+    ],
 };
 
-export default function DocsLayout({
-    children,
-}: {
-    children: React.ReactNode;
-}) {
+export default function Layout({ children }: { children: ReactNode }) {
     return (
-        <div className="min-h-screen bg-[#0a0a0a] text-slate-300 antialiased">
-            <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
-                <div className="flex gap-8">
-
-                    {/* Left Sidebar */}
-                    <aside className="hidden lg:block w-[240px] flex-shrink-0 py-8 border-r border-white/5">
-                        <DocsSidebar />
-                    </aside>
-
-                    {/* Main Content */}
-                    <main className="flex-1 min-w-0 py-8 px-4 lg:px-12">
-                        {children}
-                    </main>
-
-                    {/* Right TOC Sidebar */}
-                    <DocsToc />
-                </div>
-            </div>
-        </div>
+        <DocsLayout {...baseOptions()} tree={tree}>
+            {children}
+        </DocsLayout>
     );
 }

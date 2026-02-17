@@ -47,6 +47,7 @@
     "fumadocs-ui": "^16.5.0",
     "input-otp": "^1.4.2",
     "ioredis": "^5.8.2",
+    "jszip": "^3.10.1",
     "lucide-react": "^0.542.0",
     "motion": "^12.23.27",
     "next": "^16.1.6",

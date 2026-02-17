@@ -9,13 +9,12 @@ export async function GET(request: Request) {
     try {
       const supabase = await createClient();
       const { error } = await supabase.auth.exchangeCodeForSession(code);
-      
+
       if (!error) {
         return NextResponse.redirect(`${origin}/dashboard/usage`);
       }
-      console.error('Error exchanging code for session:', error);
     } catch (error) {
-      console.error('Exception during code exchange:', error);
+      console.error('[Auth Callback] Code exchange error:', error);
     }
   }
 

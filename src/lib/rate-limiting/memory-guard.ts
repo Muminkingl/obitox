@@ -1,102 +1,61 @@
 /**
- * In-memory rate limiting guard
- * Provides fast, lightweight protection against rapid requests
+ * In-Memory Rate Limit Guard
  * 
- * This is Layer 1 of our defense - catches abuse before hitting Redis/DB
+ * First line of defense against abuse
+ * Uses sliding window algorithm
  */
 
-interface RateLimitRecord {
+interface RateEntry {
     count: number;
     resetAt: number;
 }
 
-// In-memory store
-const requestCounts = new Map<string, RateLimitRecord>();
+const memoryStore = new Map<string, RateEntry>();
 
-/**
- * Check if request is allowed based on in-memory rate limit
- * 
- * @param userId - User identifier
- * @param operation - Operation type (e.g., 'domain-create')
- * @param limit - Max requests per window (default: 10)
- * @param windowMs - Time window in milliseconds (default: 60000 = 1 minute)
- */
-export function checkMemoryRateLimit(
-    userId: string,
-    operation: string,
-    limit: number = 10,
-    windowMs: number = 60 * 1000
-): { allowed: boolean; resetIn: number; current: number } {
-    const key = `${userId}:${operation}`;
-    const now = Date.now();
-
-    const record = requestCounts.get(key);
-
-    // No record or window expired - start new window
-    if (!record || now > record.resetAt) {
-        requestCounts.set(key, {
-            count: 1,
-            resetAt: now + windowMs
-        });
-
-        return {
-            allowed: true,
-            resetIn: Math.ceil(windowMs / 1000),
-            current: 1
-        };
-    }
-
-    // Check if limit exceeded
-    if (record.count >= limit) {
-        const resetIn = Math.ceil((record.resetAt - now) / 1000);
-        return {
-            allowed: false,
-            resetIn,
-            current: record.count
-        };
-    }
-
-    // Increment count
-    record.count++;
-    requestCounts.set(key, record);
-
-    const resetIn = Math.ceil((record.resetAt - now) / 1000);
-    return {
-        allowed: true,
-        resetIn,
-        current: record.count
-    };
-}
-
-/**
- * Cleanup expired entries (runs periodically)
- * Prevents memory leaks from old rate limit records
- */
-export function cleanupExpiredRecords(): void {
+// Cleanup old entries every 5 minutes
+setInterval(() => {
     const now = Date.now();
     let cleaned = 0;
-
-    for (const [key, record] of requestCounts.entries()) {
-        if (now > record.resetAt) {
-            requestCounts.delete(key);
+    
+    for (const [key, entry] of memoryStore.entries()) {
+        if (entry.resetAt < now) {
+            memoryStore.delete(key);
             cleaned++;
         }
     }
+    
+    memoryStore.size; // Keep reference to prevent optimization
+}, 5 * 60 * 1000);
 
-    if (cleaned > 0) {
-        console.log(`🧹 Cleaned up ${cleaned} expired rate limit records`);
+export function checkMemoryRateLimit(
+    identifier: string,
+    operation: string,
+    limit: number,
+    windowMs: number = 60000
+): { allowed: boolean; current: number; resetIn: number } {
+    const key = `${operation}:${identifier}`;
+    const now = Date.now();
+    
+    const entry = memoryStore.get(key);
+    
+    if (!entry || entry.resetAt < now) {
+        memoryStore.set(key, { count: 1, resetAt: now + windowMs });
+        return { allowed: true, current: 1, resetIn: windowMs };
     }
+    
+    if (entry.count >= limit) {
+        return { allowed: false, current: entry.count, resetIn: entry.resetAt - now };
+    }
+    
+    entry.count++;
+    return { allowed: true, current: entry.count, resetIn: entry.resetAt - now };
 }
 
-// Run cleanup every 5 minutes
-setInterval(cleanupExpiredRecords, 5 * 60 * 1000);
+export function resetMemoryRateLimit(identifier: string, operation: string): void {
+    const key = `${operation}:${identifier}`;
+    memoryStore.delete(key);
+}
 
-/**
- * Get current in-memory rate limit stats (for debugging)
- */
-export function getMemoryStats() {
-    return {
-        totalKeys: requestCounts.size,
-        memoryUsageApprox: requestCounts.size * 50 // ~50 bytes per entry
-    };
+export function getMemoryStoreSize(): number {
+    return memoryStore.size;
 }

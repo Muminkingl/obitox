@@ -1,96 +1,48 @@
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@supabase/supabase-js';
 
-/**
- * Audit Event Types
- * Tracks all critical user actions for compliance and debugging
- */
-export type AuditEventType =
-    | 'api_key_created'
-    | 'api_key_deleted'
-    | 'api_key_renamed'
-    | 'api_key_rotated'
-    | 'usage_warning_50_percent'
-    | 'usage_warning_80_percent'
-    | 'usage_limit_reached'
-    | 'usage_reset'
-    | 'account_upgraded'
-    | 'account_downgraded';
+const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
-export type ResourceType = 'api_key' | 'usage_quota' | 'account' | 'system';
-
-export type EventCategory = 'info' | 'warning' | 'critical';
-
-/**
- * Log an audit event to the database
- * 
- * @param params - Event details
- * @returns Promise that resolves when event is logged
- */
-export async function logAuditEvent({
-    userId,
-    eventType,
-    resourceType,
-    resourceId,
-    description,
-    metadata,
-    ipAddress,
-    userAgent,
-}: {
+export interface AuditLogEntry {
     userId: string;
-    eventType: AuditEventType;
-    resourceType: ResourceType;
-    resourceId?: string;
+    eventType: string;
+    resourceType: string;
+    resourceId: string;
     description: string;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
     ipAddress?: string;
     userAgent?: string;
-}): Promise<void> {
+}
+
+export async function logAuditEvent(entry: AuditLogEntry): Promise<void> {
     try {
-        const supabase = await createClient();
-
-        // Determine event category based on event type
-        const category: EventCategory = eventType.includes('warning')
-            ? 'warning'
-            : eventType.includes('limit_reached')
-                ? 'critical'
-                : 'info';
-
-        const { error } = await supabase
-            .from('audit_logs')
-            .insert({
-                user_id: userId,
-                event_type: eventType,
-                event_category: category,
-                resource_type: resourceType,
-                resource_id: resourceId,
-                description,
-                metadata: metadata || {},
-                ip_address: ipAddress,
-                user_agent: userAgent,
-            });
-
-        if (error) {
-            console.error('[AUDIT LOG ERROR]', error);
-            // Don't throw - logging failure shouldn't break the main operation
-        }
+        await supabase.from('audit_logs').insert({
+            user_id: entry.userId,
+            event_type: entry.eventType,
+            event_category: getEventCategory(entry.eventType),
+            resource_type: entry.resourceType,
+            resource_id: entry.resourceId,
+            description: entry.description,
+            metadata: entry.metadata || {},
+            ip_address: entry.ipAddress,
+            user_agent: entry.userAgent
+        });
     } catch (error) {
-        console.error('[AUDIT LOG EXCEPTION]', error);
-        // Silently fail - audit logging is important but not critical
+        console.error('[Audit Log] Failed to write:', error);
+        // Don't throw - logging failure shouldn't break the main operation
     }
 }
 
-/**
- * Mask an API key for safe logging
- * Shows only the prefix (first 8 chars) and masks the rest
- * 
- * @param apiKey - Full API key (e.g., "ox_a3f8d9e2b4c1xyz9")
- * @returns Masked key (e.g., "ox_a3f8d9e2...****")
- */
-export function maskApiKey(apiKey: string): string {
-    if (!apiKey || apiKey.length < 12) {
-        return '****';
-    }
+function getEventCategory(eventType: string): string {
+    if (eventType.includes('created')) return 'success';
+    if (eventType.includes('deleted')) return 'warning';
+    if (eventType.includes('error') || eventType.includes('failed')) return 'error';
+    return 'info';
+}
 
-    const prefix = apiKey.substring(0, 12); // ox_ + first 8 hex chars
-    return `${prefix}...****`;
+export function maskApiKey(key: string): string {
+    if (key.length <= 11) return key;
+    return `${key.substring(0, 7)}...${key.slice(-4)}`;
 }

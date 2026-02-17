@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation'
 import { ThemeProvider as NextThemesProvider } from 'next-themes'
-import { type ThemeProviderProps } from 'next-themes/dist/types'
+import { ThemeProviderProps } from 'next-themes'
 import { useEffect } from 'react'
 import { useAppearance } from '@/contexts/appearance-context'
 

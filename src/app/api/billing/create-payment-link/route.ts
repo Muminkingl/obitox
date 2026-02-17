@@ -34,28 +34,31 @@ export async function POST(req: NextRequest) {
         }
 
         // ✅ SECURITY FIX #3: Check for duplicate pending payments (15 min window)
+        // Only reuse if SAME plan AND billing cycle to prevent mismatch
         const { data: recentPending } = await supabase
             .from('billing_transactions')
             .select('*')
             .eq('user_id', user.id)
             .eq('status', 'pending')
+            .eq('plan', plan)
+            .eq('billing_cycle', billingCycle)
             .gte('created_at', new Date(Date.now() - 15 * 60 * 1000).toISOString())
             .maybeSingle();
 
         // Only reuse if payment URL actually exists (not null from failed Wayl calls)
         if (recentPending && recentPending.wayl_payment_url) {
-            console.log('[BILLING] Returning existing payment link for user:', user.id);
             return NextResponse.json({
                 success: true,
                 paymentUrl: recentPending.wayl_payment_url,
                 referenceId: recentPending.wayl_reference_id,
-                isExisting: true
+                isExisting: true,
+                plan: recentPending.plan,
+                billingCycle: recentPending.billing_cycle
             });
         }
 
         // Delete stale pending transaction without payment URL (from failed Wayl calls)
         if (recentPending && !recentPending.wayl_payment_url) {
-            console.log('[BILLING] Deleting stale transaction without payment URL:', recentPending.id);
             await supabase
                 .from('billing_transactions')
                 .delete()
@@ -91,13 +94,6 @@ export async function POST(req: NextRequest) {
         const amountInIQD = Math.round(amountUSD * usdToIqdRate); // $24 * 1310 = 31,440 IQD
         const currency = 'IQD';
 
-        console.log('[BILLING] Price calculation:', {
-            amountCents,
-            amountUSD,
-            usdToIqdRate,
-            amountInIQD
-        });
-
         // ✅ SECURITY FIX #8: Currency validation
         if (currency !== 'IQD') {
             return NextResponse.json({ error: 'Only IQD currency supported' }, { status: 400 });
@@ -122,11 +118,13 @@ export async function POST(req: NextRequest) {
             .select()
             .single();
 
+
         if (txError) {
             console.error('[BILLING] Failed to create transaction:', txError);
             throw txError;
         }
 
+        
         // Create Wayl payment link
         const webhookUrl = `${process.env.APP_URL}/api/webhooks/wayl`;
         const redirectUrl = `${process.env.APP_URL}/billing/processing?referenceId=${referenceId}`;

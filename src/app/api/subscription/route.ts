@@ -23,21 +23,12 @@ export async function GET(request: NextRequest) {
             request.headers.get('x-real-ip') ||
             '::1';
 
-        console.log(`[SUBSCRIPTION] Request from IP: ${ip}`);
-
-        // Check rate limit (no try-catch here - let errors propagate)
+        // Check rate limit
         const rateLimitResult = await subscriptionRateLimit.check(ip);
-
-        console.log(`[SUBSCRIPTION] Rate limit result:`, {
-            success: rateLimitResult.success,
-            remaining: rateLimitResult.remaining
-        });
 
         // Block if rate limited
         if (!rateLimitResult.success) {
             const retryAfter = Math.ceil((rateLimitResult.reset - Date.now()) / 1000);
-
-            console.log(`[SUBSCRIPTION] ❌ BLOCKED - Rate limit exceeded`);
 
             return NextResponse.json(
                 {
@@ -56,8 +47,6 @@ export async function GET(request: NextRequest) {
                 }
             );
         }
-
-        console.log(`[SUBSCRIPTION] ✅ Request allowed (${rateLimitResult.remaining} remaining)`);
 
         const supabase = await createClient();
 

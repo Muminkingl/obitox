@@ -3,7 +3,6 @@ import Link from 'next/link'
 import LogoCloud from './logo-cloud'
 import { Button } from '@/components/ui/button'
 import CommandButton from '@/components/ui/command-button'
-import Image from 'next/image'
 import { TextEffect } from '@/components/ui/text-effect'
 import { AnimatedGroup } from '@/components/ui/animated-group'
 import { HeroHeader } from './header'
@@ -115,39 +114,6 @@ export default function HeroSection() {
                                         <div className="flex items-center gap-2">
                                             <span className="text-primary font-bold">✓</span>
                                             <span>No credit card required</span>
-                                        </div>
-                                    </div>
-                                </AnimatedGroup>
-
-                                {/* Restored App Screenshot */}
-                                <AnimatedGroup
-                                    variants={{
-                                        container: {
-                                            visible: {
-                                                transition: {
-                                                    staggerChildren: 0.05,
-                                                    delayChildren: 0.75,
-                                                },
-                                            },
-                                        },
-                                        ...transitionVariants,
-                                    }}>
-                                    <div className="mask-b-from-55% relative -mr-56 mt-8 overflow-hidden px-2 sm:mr-0 sm:mt-12 md:mt-20">
-                                        <div className="inset-shadow-2xs ring-background dark:inset-shadow-white/20 bg-background relative mx-auto max-w-6xl overflow-hidden rounded-2xl border p-4 shadow-lg shadow-zinc-950/15 ring-1">
-                                            <Image
-                                                className="bg-background aspect-15/8 relative hidden rounded-2xl dark:block"
-                                                src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop"
-                                                alt="app screen dark"
-                                                width="1350"
-                                                height="720"
-                                            />
-                                            <Image
-                                                className="z-2 border-border/25 aspect-15/8 relative rounded-2xl border dark:hidden"
-                                                src="https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2670&auto=format&fit=crop"
-                                                alt="app screen light"
-                                                width="1350"
-                                                height="720"
-                                            />
                                         </div>
                                     </div>
                                 </AnimatedGroup>

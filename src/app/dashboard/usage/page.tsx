@@ -17,8 +17,8 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { type DateRange } from 'react-day-picker';
-import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts';
-import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts';
+import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart';
 import { AppSidebar } from "@/components/app-sidebar";
 import {
   Breadcrumb,
@@ -76,23 +76,18 @@ interface CurrentUsage {
   lastUsedAt: string | null;
 }
 
-// Chart configuration
+// Chart configuration with explicit colors
 const chartConfig = {
+  usage: {
+    label: 'Usage',
+  },
   uploads: {
     label: 'Uploads',
-    color: 'hsl(var(--chart-1))',
-  },
-  bandwidth: {
-    label: 'Bandwidth',
-    color: 'hsl(var(--chart-2))',
+    color: '#8b5cf6', // violet-500
   },
   apiCalls: {
     label: 'API Calls',
-    color: 'hsl(var(--chart-3))',
-  },
-  successRate: {
-    label: 'Success Rate',
-    color: 'hsl(var(--chart-4))',
+    color: '#06b6d4', // cyan-500
   },
 } satisfies ChartConfig;
 
@@ -111,6 +106,7 @@ const defaultCurrentUsage: CurrentUsage = {
 
 export default function UsagePage() {
   const [selectedMetric, setSelectedMetric] = useState<'uploads' | 'bandwidth' | 'apiCalls' | 'successRate'>('uploads');
+  const [timeRange, setTimeRange] = useState('90d');
 
   // Set default date range to last month to today
   const [dateRange, setDateRange] = useState<DateRange>(() => {
@@ -206,6 +202,39 @@ export default function UsagePage() {
     ? `${dateRange.from.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${dateRange.to.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
     : 'Select date range';
 
+  // Filter chart data based on time range
+  const filteredChartData = React.useMemo(() => {
+    if (apiUsageData.length === 0) return [];
+    
+    // Get the most recent date from the data
+    const dates = apiUsageData.map(d => {
+      // Parse month format like "Jan 2024" or "2024-01"
+      const parts = d.month.split(' ');
+      if (parts.length === 2) {
+        // Format: "Jan 2024"
+        return new Date(`${parts[0]} 1, ${parts[1]}`);
+      }
+      return new Date(d.month);
+    }).filter(d => !isNaN(d.getTime()));
+    
+    if (dates.length === 0) return apiUsageData;
+    
+    const referenceDate = new Date(Math.max(...dates.map(d => d.getTime())));
+    let daysToSubtract = 90;
+    if (timeRange === '30d') {
+      daysToSubtract = 30;
+    } else if (timeRange === '7d') {
+      daysToSubtract = 7;
+    }
+    const startDate = new Date(referenceDate);
+    startDate.setDate(startDate.getDate() - daysToSubtract);
+    
+    return apiUsageData.filter((item, index) => {
+      const date = dates[index];
+      return date >= startDate;
+    });
+  }, [apiUsageData, timeRange]);
+
   // Calculate totals based on the most recent month
   const latestMonth = apiUsageData[apiUsageData.length - 1] || {
     uploads: 0,
@@ -296,7 +325,7 @@ export default function UsagePage() {
                   <div className="text-xs font-medium text-muted-foreground tracking-wide mb-2">
                     {dateRangeText}
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                     {/* Plan Quota Card */}
                     <div className="p-4 border rounded-lg bg-muted/20">
                       <div className="flex items-center justify-between mb-2">
@@ -346,7 +375,7 @@ export default function UsagePage() {
                       </div>
                     </div>
                     <div className="p-4 border rounded-lg">
-                      <div className="text-sm font-medium text-muted-foreground mb-1">API Calls</div>
+                      <div className="text-sm font-medium text-muted-foreground mb-1">Total API Calls</div>
                       <div className="text-2xl font-bold">
                         {loading ? 'Loading...' : (
                           selectedProviders.length > 0 || selectedFileTypes.length > 0
@@ -355,52 +384,36 @@ export default function UsagePage() {
                         )} requests
                       </div>
                     </div>
-                    <div className="p-4 border rounded-lg">
-                      <div className="text-sm font-medium text-muted-foreground mb-1">Success Rate</div>
-                      <div className="text-2xl font-bold">
-                        {loading ? 'Loading...' : (
-                          <>
-                            {selectedProviders.length > 0 || selectedFileTypes.length > 0
-                              ? apiUsageData.length > 0
-                                ? Math.round(apiUsageData.reduce((sum, month) => sum + month.successRate, 0) / apiUsageData.length)
-                                : 0
-                              : currentUsage.totalRequests > 0
-                                ? Math.round((currentUsage.successfulRequests / currentUsage.totalRequests) * 100)
-                                : 0
-                            }%
-                          </>
-                        )}
-                      </div>
-                    </div>
                   </div>
                 </div>
 
                 {/* Chart */}
-                <div className="relative h-[300px] px-4">
+                <div className="relative px-4">
                   {loading ? (
-                    <div className="flex items-center justify-center h-full">
+                    <div className="flex items-center justify-center h-[250px]">
                       <div className="text-muted-foreground">Loading chart data...</div>
                     </div>
                   ) : error ? (
-                    <div className="flex items-center justify-center h-full">
+                    <div className="flex items-center justify-center h-[250px]">
                       <div className="text-red-500">Error: {error}</div>
                     </div>
                   ) : apiUsageData.length === 0 ? (
-                    <div className="flex items-center justify-center h-full">
+                    <div className="flex items-center justify-center h-[250px]">
                       <div className="text-muted-foreground">No data available for the selected period</div>
                     </div>
                   ) : (
-                    <ChartContainer config={chartConfig} className="h-full w-full">
-                      <BarChart
-                        accessibilityLayer
-                        data={apiUsageData}
-                        margin={{
-                          left: 12,
-                          right: 12,
-                          top: 20,
-                          bottom: 20,
-                        }}
-                      >
+                    <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">
+                      <AreaChart data={apiUsageData}>
+                        <defs>
+                          <linearGradient id="fillUploads" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8} />
+                            <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.1} />
+                          </linearGradient>
+                          <linearGradient id="fillApiCalls" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.8} />
+                            <stop offset="95%" stopColor="#06b6d4" stopOpacity={0.1} />
+                          </linearGradient>
+                        </defs>
                         <CartesianGrid vertical={false} />
                         <XAxis
                           dataKey="month"
@@ -408,23 +421,34 @@ export default function UsagePage() {
                           axisLine={false}
                           tickMargin={8}
                           minTickGap={32}
-                          tickFormatter={(value) => {
-                            // Format month string for display
-                            return value;
-                          }}
+                          tickFormatter={(value) => value}
                         />
                         <ChartTooltip
+                          cursor={false}
                           content={
                             <ChartTooltipContent
                               className="w-[180px]"
-                              labelFormatter={(value) => {
-                                return value;
-                              }}
+                              labelFormatter={(value) => value}
+                              indicator="dot"
                             />
                           }
                         />
-                        <Bar dataKey="uploads" fill="var(--color-uploads)" radius={4} />
-                      </BarChart>
+                        <Area
+                          dataKey="apiCalls"
+                          type="natural"
+                          fill="url(#fillApiCalls)"
+                          stroke="#06b6d4"
+                          stackId="a"
+                        />
+                        <Area
+                          dataKey="uploads"
+                          type="natural"
+                          fill="url(#fillUploads)"
+                          stroke="#8b5cf6"
+                          stackId="a"
+                        />
+                        <ChartLegend content={<ChartLegendContent />} />
+                      </AreaChart>
                     </ChartContainer>
                   )}
                 </div>

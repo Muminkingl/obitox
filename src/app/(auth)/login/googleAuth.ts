@@ -1,37 +1,39 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { FormError } from '@/lib/utils';
-import { headers } from 'next/headers';
 
 export async function loginWithGoogle() {
-  try {
-    // Get headers asynchronously
-    const headersList = await headers();
-    const origin = headersList.get('origin') || 'http://localhost:3000';
-        
-    // Create Supabase client
-    const supabase = await createClient();
-        
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${origin}/auth/callback`,
-        queryParams: {
-          access_type: 'offline',
-          prompt: 'consent',
-        },
-      },
-    });
+  const supabase = await createClient();
+  const origin = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-    if (error) {
-      console.error("OAuth error:", error);
-      return FormError(error.message);
-    }
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${origin}/auth/callback`,
+    },
+  });
 
-    return { url: data.url };
-  } catch (error) {
-    console.error('Google login error:', error);
-    return FormError('Failed to initiate Google sign-in');
+  if (error) {
+    return { error: error.message };
   }
+
+  return { url: data.url };
+}
+
+export async function loginWithGithub() {
+  const supabase = await createClient();
+  const origin = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'github',
+    options: {
+      redirectTo: `${origin}/auth/callback`,
+    },
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { url: data.url };
 }

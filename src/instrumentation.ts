@@ -13,7 +13,5 @@ export async function register() {
         // DNS verification cron removed - domains feature deprecated
         // const { startDNSVerificationCron } = await import('@/lib/domains/verify-domains-cron');
         // startDNSVerificationCron();
-
-        console.log('✅ Server instrumentation initialized');
     }
 }

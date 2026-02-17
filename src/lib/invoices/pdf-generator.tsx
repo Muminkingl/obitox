@@ -456,8 +456,6 @@ const InvoicePDF: React.FC<{ invoice: InvoiceData }> = ({ invoice }) => {
  */
 export async function generateInvoicePDF(invoice: InvoiceData): Promise<Buffer> {
     try {
-        console.log(`[PDF] Generating for invoice ${invoice.invoice_number}`);
-
         const startTime = Date.now();
 
         // Create PDF document
@@ -468,9 +466,6 @@ export async function generateInvoicePDF(invoice: InvoiceData): Promise<Buffer> 
 
         // Convert to buffer
         const buffer = Buffer.from(await blob.arrayBuffer());
-
-        const duration = Date.now() - startTime;
-        console.log(`[PDF] ✅ Generated ${buffer.length} bytes in ${duration}ms`);
 
         return buffer;
 
@@ -490,7 +485,7 @@ export async function generateAndStorePDF(
     const crypto = await import('crypto');
 
     try {
-        const supabase = createClient();
+        const supabase = await createClient();
 
         // 1. Fetch invoice
         const { data: invoice, error } = await supabase
@@ -539,8 +534,6 @@ export async function generateAndStorePDF(
                 pdf_generated_at: new Date().toISOString()
             })
             .eq('id', invoiceId);
-
-        console.log(`[PDF] ✅ Stored PDF for ${invoice.invoice_number}`);
 
         return {
             url: urlData.publicUrl,

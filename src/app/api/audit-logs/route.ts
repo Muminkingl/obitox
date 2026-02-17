@@ -28,8 +28,6 @@ export async function GET(request: NextRequest) {
         if (!rateLimitResult.success) {
             const retryAfter = Math.ceil((rateLimitResult.reset - Date.now()) / 1000);
 
-            console.log(`[AUDIT LOGS] ❌ Rate limited IP: ${ip}`);
-
             return NextResponse.json(
                 {
                     error: 'Too many requests. Please slow down.',
@@ -45,8 +43,6 @@ export async function GET(request: NextRequest) {
                 }
             );
         }
-
-        console.log(`[AUDIT LOGS] ✅ Request allowed (${rateLimitResult.remaining} remaining)`);
 
         // 2. Get authenticated user
         const supabase = await createClient();
@@ -71,8 +67,6 @@ export async function GET(request: NextRequest) {
         let offset = parseInt(offsetStr);
         if (isNaN(offset) || offset < 0) offset = 0;
 
-        console.log(`[AUDIT LOGS] Fetching logs: user=${user.id}, limit=${limit}, offset=${offset}, filter=${eventType || 'all'}`);
-
         // 4. Build query
         let query = supabase
             .from('audit_logs')
@@ -94,8 +88,6 @@ export async function GET(request: NextRequest) {
         }
 
         const processingTime = Date.now() - startTime;
-
-        console.log(`[AUDIT LOGS] ✅ Fetched ${data?.length || 0} logs in ${processingTime}ms`);
 
         // 5. Return with caching + rate limit headers
         return NextResponse.json(

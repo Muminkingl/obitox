@@ -50,7 +50,6 @@ export async function GET(
         }
 
         // 4. Generate PDF
-        console.log(`[INVOICE DOWNLOAD] Generating PDF for ${invoice.invoice_number}`);
         const pdfBuffer = await generateInvoicePDF(invoice);
 
         // 5. Log download (audit trail)

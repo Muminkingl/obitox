@@ -14,7 +14,6 @@ export function verifyWebhookSignature(
 ): boolean {
     try {
         if (!signature || !secret) {
-            console.error('[WEBHOOK] Missing signature or secret');
             return false;
         }
 
@@ -27,10 +26,6 @@ export function verifyWebhookSignature(
             Buffer.from(signature),
             Buffer.from(expectedSignature)
         );
-
-        if (!isValid) {
-            console.warn('[WEBHOOK] Signature mismatch');
-        }
 
         return isValid;
     } catch (error) {

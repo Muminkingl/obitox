@@ -17,18 +17,14 @@ export async function middleware(request: NextRequest) {
 
     // If user is authenticated and trying to access auth pages
     if (session) {
-      if (
-        request.nextUrl.pathname === '/login' ||
-        request.nextUrl.pathname === '/signup' ||
-        request.nextUrl.pathname === '/otp'
-      ) {
+      if (request.nextUrl.pathname === '/login') {
         // Redirect to dashboard
         const redirectUrl = new URL('/dashboard/usage', request.url);
         return NextResponse.redirect(redirectUrl);
       }
     }
   } catch (error) {
-    console.error('Error in middleware:', error);
+    // Silently continue on middleware errors
   }
 
   // Maintenance Mode
@@ -49,7 +45,5 @@ export const config = {
   matcher: [
     '/dashboard/:path*',
     '/login',
-    '/signup',
-    '/otp',
   ],
 };

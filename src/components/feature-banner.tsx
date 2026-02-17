@@ -20,7 +20,7 @@ export default function FeatureBanner() {
                         <div className="rotate-x-6 -skew-2">
                             <div className="aspect-88/36 relative">
                                 <Image
-                                    src="https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=2670&auto=format&fit=crop"
+                                    src="/enhanced_image.png"
                                     className="absolute inset-0 z-10 rounded-2xl border border-border/50 shadow-2xl opacity-80"
                                     alt="Universal upload infrastructure"
                                     width={2797}

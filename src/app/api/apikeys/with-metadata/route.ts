@@ -30,8 +30,6 @@ export async function GET(request: NextRequest) {
         if (!rateLimitResult.success) {
             const retryAfter = Math.ceil((rateLimitResult.reset - Date.now()) / 1000);
 
-            console.log(`[API KEYS COMBINED] ❌ Rate limited IP: ${ip}`);
-
             return NextResponse.json(
                 { error: 'Too many requests. Please try again later.', retryAfter },
                 {
@@ -48,8 +46,6 @@ export async function GET(request: NextRequest) {
 
         // Validate user authentication
         const user = await validateRequest(supabase);
-
-        console.log('[API KEYS COMBINED] Fetching all data in parallel...');
 
         // 2. ✅ SINGLE TRANSACTION - Fetch everything at once
         const [keysResult, limitValue, remainingValue] = await Promise.all([
@@ -88,8 +84,6 @@ export async function GET(request: NextRequest) {
         const used = Math.max(0, limit - remaining);
 
         const processingTime = Date.now() - startTime;
-
-        console.log(`[API KEYS COMBINED] ✅ Fetched ${maskedKeys.length} keys + metadata in ${processingTime}ms`);
 
         // 3. Return combined response with cache headers
         return NextResponse.json(

@@ -31,15 +31,19 @@ const sdkTabs = [
         icon: <Braces className="size-full" />,
         code: `import { ObitoX } from 'obitox';
 
-const client = new ObitoX('your_api_key');
-
-await client.upload(file, {
-  provider: 'r2',
-  r2AccessKey: 'your_r2_access_key',
-  r2SecretKey: 'your_r2_secret_key',
-  r2AccountId: 'your_account_id',
-  r2Bucket: 'my-bucket'
+const client = new ObitoX({
+  apiKey: 'your_api_key',
+  apiSecret: 'your_api_secret'
 });
+
+const r2 = client.r2({
+  accessKeyId: 'your_r2_access_key',
+  secretAccessKey: 'your_r2_secret_key',
+  accountId: 'your_account_id',
+  bucket: 'my-bucket'
+});
+
+await r2.upload(file);
 // Done! ✓`
     },
     {
@@ -50,15 +54,19 @@ await client.upload(file, {
 import { ObitoX } from 'obitox';
 
 export default async (req) => {
-  const client = new ObitoX(env.OBITOX_KEY);
-  
-  return await client.upload(req.file, {
-    provider: 'r2',
-    r2AccessKey: env.R2_ACCESS_KEY,
-    r2SecretKey: env.R2_SECRET_KEY,
-    r2AccountId: env.R2_ACCOUNT_ID,
-    r2Bucket: 'uploads'
+  const client = new ObitoX({
+    apiKey: env.OBITOX_KEY,
+    apiSecret: env.OBITOX_SECRET
   });
+  
+  const r2 = client.r2({
+    accessKeyId: env.R2_ACCESS_KEY,
+    secretAccessKey: env.R2_SECRET_KEY,
+    accountId: env.R2_ACCOUNT_ID,
+    bucket: 'uploads'
+  });
+  
+  return await r2.upload(req.file);
 };`
     },
     {
@@ -69,15 +77,19 @@ export default async (req) => {
 import { ObitoX } from 'obitox';
 
 export async function POST(req: Request) {
-  const client = new ObitoX(process.env.OBITOX_KEY);
-  const formData = await req.formData();
-  
-  const result = await client.upload(formData.get('file'), {
-    provider: 'supabase',
-    supabaseUrl: process.env.SUPABASE_URL,
-    supabaseKey: process.env.SUPABASE_KEY,
-    supabaseBucket: 'uploads'
+  const client = new ObitoX({
+    apiKey: process.env.OBITOX_KEY!,
+    apiSecret: process.env.OBITOX_SECRET!
   });
+  
+  const supabase = client.supabase({
+    url: process.env.SUPABASE_URL!,
+    token: process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    bucket: 'uploads'
+  });
+  
+  const formData = await req.formData();
+  const result = await supabase.upload(formData.get('file'));
 
   return Response.json(result);
 }`
@@ -88,17 +100,19 @@ export async function POST(req: Request) {
         icon: <Terminal className="size-full" />,
         code: `from obitox import Client
 
-client = Client(api_key="your_api_key")
-
-result = client.upload(
-    file=file,
-    provider: 'r2',
-    r2AccessKey: env.R2_ACCESS_KEY,
-    r2SecretKey: env.R2_SECRET_KEY,
-    r2AccountId: env.R2_ACCOUNT_ID,
-    r2Bucket: 'uploads'
+client = Client(
+    api_key="your_api_key",
+    api_secret="your_api_secret"
 )
 
+r2 = client.r2(
+    access_key_id="your_r2_access_key",
+    secret_access_key="your_r2_secret_key",
+    account_id="your_account_id",
+    bucket="my-bucket"
+)
+
+result = r2.upload(file)
 print(result.url)  # Done! ✓`
     },
     {
@@ -110,16 +124,19 @@ print(result.url)  # Done! ✓`
 import "github.com/obitox/obitox-go"
 
 func main() {
-    client := obitox.NewClient("your_api_key")
+    client := obitox.NewClient(
+        obitox.WithAPIKey("your_api_key"),
+        obitox.WithAPISecret("your_api_secret"),
+    )
 
-    resp, _ := client.Upload(obitox.UploadParams{
-        File:         file,
-        Provider:     "r2",
-        R2AccessKey:  "your_r2_access_key",
-        R2SecretKey:  "your_r2_secret_key",
-        R2AccountID:  "your_account_id",
-        R2Bucket:     "my-bucket",
-    })
+    r2 := client.R2(
+        obitox.WithAccessKeyID("your_r2_access_key"),
+        obitox.WithSecretAccessKey("your_r2_secret_key"),
+        obitox.WithAccountID("your_account_id"),
+        obitox.WithBucket("my-bucket"),
+    )
+
+    resp, _ := r2.Upload(file)
 
     println(resp.URL)  // Done! ✓
 }`
@@ -132,15 +149,18 @@ func main() {
 
 #[tokio::main]
 async fn main() {
-    let client = Client::new("your_api_key");
+    let client = Client::new(
+        "your_api_key",
+        "your_api_secret"
+    );
     
-    let res = client.upload(UploadParams {
-        file: file,
-        provider: "supabase",
-        supabase_url: "your_supabase_url",
-        supabase_key: "your_supabase_key",
-        supabase_bucket: "uploads",
-    }).await?;
+    let supabase = client.supabase(
+        "your_supabase_url",
+        "your_supabase_token",
+        "uploads"
+    );
+    
+    let res = supabase.upload(file).await?;
     
     println!("URL: {}", res.url);  // Done! ✓
 }`
@@ -151,14 +171,17 @@ async fn main() {
         icon: <Flame className="size-full" />,
         code: `require 'obitox'
 
-client = ObitoX::Client.new('your_api_key')
-
-result = client.upload(
-  file: file,
-  provider: 'uploadcare',
-  uploadcare_public_key: 'your_public_key',
-  uploadcare_secret_key: 'your_secret_key'
+client = ObitoX::Client.new(
+  api_key: 'your_api_key',
+  api_secret: 'your_api_secret'
 )
+
+uploadcare = client.uploadcare(
+  public_key: 'your_public_key',
+  secret_key: 'your_secret_key'
+)
+
+result = uploadcare.upload(file)
 
 puts result.url  # Done! ✓`
     },
@@ -169,17 +192,21 @@ puts result.url  # Done! ✓`
         code: `// src/pages/api/upload.ts
 import { ObitoX } from 'obitox';
 
-const client = new ObitoX(import.meta.env.OBITOX_KEY);
+const client = new ObitoX({
+  apiKey: import.meta.env.OBITOX_KEY,
+  apiSecret: import.meta.env.OBITOX_SECRET
+});
+
+const r2 = client.r2({
+  accessKeyId: import.meta.env.R2_ACCESS_KEY,
+  secretAccessKey: import.meta.env.R2_SECRET_KEY,
+  accountId: import.meta.env.R2_ACCOUNT_ID,
+  bucket: 'uploads'
+});
 
 const formData = await Astro.request.formData();
 
-const result = await client.upload(formData.get('file'), {
-  provider: 'r2',
-  r2AccessKey: import.meta.env.R2_ACCESS_KEY,
-  r2SecretKey: import.meta.env.R2_SECRET_KEY,
-  r2AccountId: import.meta.env.R2_ACCOUNT_ID,
-  r2Bucket: 'uploads'
-});
+const result = await r2.upload(formData.get('file'));
 
 return Response.json(result);`}
 ]

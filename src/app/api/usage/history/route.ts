@@ -242,15 +242,19 @@ function generateMonthlyDataFromDaily(dailyUsage: any[], startDate: Date, endDat
 
 /**
  * Format provider breakdown from provider_usage table
+ * Excludes 'vercel' provider as it has been removed
  */
 function formatProviderBreakdown(providerStats: any[]) {
   if (!providerStats || providerStats.length === 0) {
     return [];
   }
 
-  const totalUploads = providerStats.reduce((sum, p) => sum + (p.upload_count || 0), 0);
+  // Filter out vercel provider
+  const filteredStats = providerStats.filter(p => p.provider !== 'vercel');
+  
+  const totalUploads = filteredStats.reduce((sum, p) => sum + (p.upload_count || 0), 0);
 
-  return providerStats.map(provider => ({
+  return filteredStats.map(provider => ({
     id: provider.provider,
     label: getProviderLabel(provider.provider),
     value: provider.provider,
@@ -265,11 +269,15 @@ function formatProviderBreakdown(providerStats: any[]) {
 
 /**
  * Extract file type breakdown from provider_usage file_type_counts
+ * Excludes 'vercel' provider as it has been removed
  */
 function extractFileTypeBreakdown(providerStats: any[]) {
   const fileTypeMap = new Map<string, number>();
 
-  providerStats.forEach(provider => {
+  // Filter out vercel provider
+  const filteredStats = providerStats.filter(p => p.provider !== 'vercel');
+
+  filteredStats.forEach(provider => {
     if (provider.file_type_counts) {
       let counts = provider.file_type_counts;
       // Parse if it's a string
@@ -373,6 +381,7 @@ function getProviderLabel(provider: string): string {
     's3': 'Amazon S3',
     'aws': 'AWS S3',
     'firebase': 'Firebase Storage'
+    // Note: 'vercel' has been removed
   };
   return labels[provider] || provider.charAt(0).toUpperCase() + provider.slice(1);
 }

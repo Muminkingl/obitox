@@ -14,29 +14,23 @@ export async function getUserSubscription(userId: string): Promise<UserSubscript
   // Validate user authentication first
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
-    console.error('No authenticated user found when fetching subscription');
     return null;
   }
 
-  // ✅ SMART EXPIRATION: Use profiles_with_tier view for computed tier
+  // Use profiles_with_tier view for computed tier
   const { data, error } = await supabase
-    .from('profiles_with_tier')  // ← Using computed view!
+    .from('profiles_with_tier')
     .select('subscription_tier, is_subscription_expired, days_until_expiration')
     .eq('id', userId)
     .single();
 
-
   if (error || !data) {
-    console.error('Error fetching user subscription:', error);
     return null;
   }
 
-  // ✅ is_subscription_expired comes from the computed view
-  const isExpired = data.is_subscription_expired || false;
-
   return {
     plan: (data.subscription_tier || 'free') as SubscriptionPlan,
-    trialEndsAt: null,  // No longer using trial system
+    trialEndsAt: null,
     isInTrial: false
   };
 }
@@ -45,16 +39,15 @@ export async function getUserSubscription(userId: string): Promise<UserSubscript
 export async function getApiKeyLimit(userId: string): Promise<number> {
   const subscription = await getUserSubscription(userId);
 
-  if (!subscription) return 1; // Default to Free tier (stricter limit)
+  if (!subscription) return 1;
 
-  // Match the limits from subscription_plans table
   switch (subscription.plan) {
     case 'free':
       return 1;
     case 'pro':
       return 15;
     case 'enterprise':
-      return 999999; // Effectively unlimited
+      return 999999;
     default:
       return 1;
   }
@@ -68,7 +61,6 @@ export async function getRemainingApiKeys(userId: string): Promise<number> {
     .rpc('count_user_api_keys', { user_uuid: userId });
 
   if (error || data === null) {
-    console.error('Error counting API keys:', error);
     return 0;
   }
 

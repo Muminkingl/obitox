@@ -11,7 +11,6 @@ export function getRedisClient(): Redis {
         const redisUrl = process.env.REDIS_URL;
 
         if (!redisUrl) {
-            console.warn('⚠️  REDIS_URL not set - Redis features disabled');
             throw new Error('Redis not configured');
         }
 
@@ -19,26 +18,17 @@ export function getRedisClient(): Redis {
             maxRetriesPerRequest: 3,
             retryStrategy: (times) => {
                 if (times > 3) {
-                    console.error('❌ Redis connection failed after 3 retries');
                     return null;
                 }
                 return Math.min(times * 50, 2000);
             },
             tls: {
-                rejectUnauthorized: false // Required for Upstash
+                rejectUnauthorized: false
             }
         });
 
-        redis.on('connect', () => {
-            console.log('✅ Redis connected successfully');
-        });
-
         redis.on('error', (err) => {
-            console.error('❌ Redis error:', err.message);
-        });
-
-        redis.on('close', () => {
-            console.log('⚠️  Redis connection closed');
+            console.error('[Redis] Connection error:', err.message);
         });
     }
 
@@ -52,10 +42,9 @@ export async function testRedisConnection(): Promise<boolean> {
     try {
         const client = getRedisClient();
         await client.ping();
-        console.log('✅ Redis connection test passed');
         return true;
     } catch (error) {
-        console.error('❌ Redis connection test failed:', error);
+        console.error('[Redis] Connection test failed:', error);
         return false;
     }
 }

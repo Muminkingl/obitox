@@ -38,6 +38,7 @@ export default function AppearancePage() {
     // UI states
     const [isLoading, setIsLoading] = React.useState(false)
     const [showSuccess, setShowSuccess] = React.useState(false)
+    const [uploadingLogo, setUploadingLogo] = React.useState(false)
 
     // Load initial values from context and auth
     React.useEffect(() => {

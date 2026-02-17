@@ -22,14 +22,11 @@ export async function checkRateLimit(
     operation: Operation,
     tier: UserTier
 ): Promise<RateLimitResult> {
-    // ==========================================
-    // LAYER 1: MEMORY GUARD (0-2ms)
-    // ==========================================
+    // Layer 1: Memory guard
     const memoryLimit = RATE_LIMIT_CONFIG.MEMORY[operation];
     const memoryCheck = checkMemoryRateLimit(userId, operation, memoryLimit);
 
     if (!memoryCheck.allowed) {
-        console.warn(`⚠️  Memory rate limit hit: ${userId} - ${operation}`);
         return {
             allowed: false,
             current: memoryCheck.current,
@@ -39,16 +36,13 @@ export async function checkRateLimit(
         };
     }
 
-    // ==========================================
-    // LAYER 2: REDIS DISTRIBUTED LIMIT (5-20ms)
-    // ==========================================
+    // Layer 2: Redis distributed limit
     try {
         const redis = getRedisClient();
 
         const hourlyLimits = RATE_LIMIT_CONFIG.HOURLY[tier];
         const hourlyLimit = hourlyLimits[operation];
 
-        // -1 means unlimited
         if (hourlyLimit === -1) {
             return {
                 allowed: true,
@@ -62,15 +56,13 @@ export async function checkRateLimit(
         const key = `ratelimit:hourly:${operation}:${userId}`;
         const current = await redis.incr(key);
 
-        // Set expiry on first increment
         if (current === 1) {
-            await redis.expire(key, 3600); // 1 hour
+            await redis.expire(key, 3600);
         }
 
         const ttl = await redis.ttl(key);
 
         if (current > hourlyLimit) {
-            console.warn(`⚠️  Redis rate limit hit: ${userId} - ${operation} (${current}/${hourlyLimit})`);
             return {
                 allowed: false,
                 current,
@@ -89,10 +81,8 @@ export async function checkRateLimit(
         };
 
     } catch (error) {
-        // If Redis fails, fall back to memory-only rate limiting
-        console.error('❌ Redis rate limit check failed:', error);
-        console.log('⚠️  Falling back to memory-only rate limiting');
-
+        console.error('[Rate Limit] Redis check failed:', error);
+        // Fallback to memory-only rate limiting
         return {
             allowed: memoryCheck.allowed,
             current: memoryCheck.current,
@@ -112,13 +102,10 @@ export async function resetRateLimit(
 ): Promise<void> {
     try {
         const redis = getRedisClient();
-
         const key = `ratelimit:hourly:${operation}:${userId}`;
         await redis.del(key);
-
-        console.log(`✅ Rate limit reset for ${userId} - ${operation}`);
     } catch (error) {
-        console.error('❌ Failed to reset rate limit:', error);
+        console.error('[Rate Limit] Failed to reset:', error);
     }
 }
 
@@ -150,7 +137,7 @@ export async function getRateLimitStatus(
             resetIn: ttl > 0 ? ttl : 3600
         };
     } catch (error) {
-        console.error('❌ Failed to get rate limit status:', error);
+        console.error('[Rate Limit] Failed to get status:', error);
         return { current: 0, limit: 0, resetIn: 0 };
     }
 }

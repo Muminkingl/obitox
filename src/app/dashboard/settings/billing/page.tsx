@@ -20,6 +20,8 @@ export default function BillingPage() {
     const [upgradeLoading, setUpgradeLoading] = React.useState(false)
     const [sortOrder, setSortOrder] = React.useState<'asc' | 'desc'>('desc')
     const [selectedInvoices, setSelectedInvoices] = React.useState<string[]>([])
+    const [downloadLoading, setDownloadLoading] = React.useState(false)
+    const [downloadingInvoices, setDownloadingInvoices] = React.useState<Set<string>>(new Set())
 
     // ✅ LIVE DATA: Fetch real invoices from API
     const [invoices, setInvoices] = React.useState<any[]>([])
@@ -191,9 +193,54 @@ export default function BillingPage() {
                                 Download your previous invoices.
                             </p>
                         </div>
-                        <Button color="outline" size="sm" className="gap-2 text-foreground">
+                        <Button
+                            color="outline"
+                            size="sm"
+                            className="gap-2 text-foreground"
+                            disabled={selectedInvoices.length === 0 || downloadLoading}
+                            onClick={async () => {
+                                if (selectedInvoices.length === 0) return
+                                setDownloadLoading(true)
+
+                                try {
+                                    // Use bulk-download API to get ZIP file
+                                    const response = await fetch('/api/invoices/bulk-download', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify({ invoiceIds: selectedInvoices })
+                                    })
+
+                                    if (!response.ok) {
+                                        const error = await response.json()
+                                        throw new Error(error.error || 'Download failed')
+                                    }
+
+                                    const blob = await response.blob()
+                                    const url = window.URL.createObjectURL(blob)
+                                    const a = document.createElement('a')
+                                    a.href = url
+                                    a.download = `invoices-${new Date().toISOString().split('T')[0]}.zip`
+                                    document.body.appendChild(a)
+                                    a.click()
+
+                                    // Cleanup
+                                    setTimeout(() => {
+                                        window.URL.revokeObjectURL(url)
+                                        document.body.removeChild(a)
+                                        setSelectedInvoices([])
+                                        setDownloadLoading(false)
+                                    }, 500)
+                                } catch (error) {
+                                    console.error('[BILLING] Bulk download failed:', error)
+                                    alert('Failed to download invoices')
+                                    setDownloadLoading(false)
+                                }
+                            }}
+                        >
                             <Download className="h-4 w-4" />
-                            Download selected
+                            {downloadLoading ? 'Creating ZIP...' : `Download selected${selectedInvoices.length > 0 ? ` (${selectedInvoices.length})` : ''}`}
                         </Button>
                     </div>
 
@@ -266,7 +313,13 @@ export default function BillingPage() {
                                                     color="ghost"
                                                     size="sm"
                                                     className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                                                    disabled={downloadingInvoices.has(invoice.id)}
                                                     onClick={async () => {
+                                                        // Prevent spam clicking
+                                                        if (downloadingInvoices.has(invoice.id)) return
+
+                                                        setDownloadingInvoices(prev => new Set(prev).add(invoice.id))
+
                                                         try {
                                                             const response = await fetch(`/api/invoices/${invoice.id}/download`)
                                                             if (!response.ok) throw new Error('Download failed')
@@ -277,11 +330,24 @@ export default function BillingPage() {
                                                             a.download = `invoice-${invoice.invoice_number}.pdf`
                                                             document.body.appendChild(a)
                                                             a.click()
-                                                            window.URL.revokeObjectURL(url)
-                                                            document.body.removeChild(a)
+
+                                                            // Cleanup after download starts
+                                                            setTimeout(() => {
+                                                                window.URL.revokeObjectURL(url)
+                                                                document.body.removeChild(a)
+                                                            }, 500)
                                                         } catch (error) {
                                                             console.error('[BILLING] Download failed:', error)
                                                             alert('Failed to download invoice')
+                                                        } finally {
+                                                            // Remove from downloading set after a short delay
+                                                            setTimeout(() => {
+                                                                setDownloadingInvoices(prev => {
+                                                                    const next = new Set(prev)
+                                                                    next.delete(invoice.id)
+                                                                    return next
+                                                                })
+                                                            }, 1000)
                                                         }
                                                     }}
                                                 >

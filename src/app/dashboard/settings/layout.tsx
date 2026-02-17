@@ -21,7 +21,7 @@ export default function SettingsLayout({
 }) {
     const pathname = usePathname()
 
-    const tabs = [
+    const tabs: Array<{ name: string; href: string; badge?: string }> = [
         { name: "Appearance", href: "/dashboard/settings/appearance" },
         { name: "Team", href: "/dashboard/settings/team" },
         { name: "Billing", href: "/dashboard/settings/billing" },

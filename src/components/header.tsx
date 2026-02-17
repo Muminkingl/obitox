@@ -148,33 +148,13 @@ export const HeroHeader = () => {
                                     user ? (
                                         <UserMenu user={user} />
                                     ) : (
-                                        <>
-                                            <Button
-                                                asChild
-                                                variant="outline"
-                                                size="sm"
-                                                className={cn(isScrolled && 'lg:hidden')}>
-                                                <Link href="/login">
-                                                    <span>Login</span>
-                                                </Link>
-                                            </Button>
-                                            <Button
-                                                asChild
-                                                size="sm"
-                                                className={cn(isScrolled && 'lg:hidden')}>
-                                                <Link href="/signup">
-                                                    <span>Sign Up</span>
-                                                </Link>
-                                            </Button>
-                                            <Button
-                                                asChild
-                                                size="sm"
-                                                className={cn(isScrolled ? 'lg:inline-flex' : 'hidden')}>
-                                                <Link href="/signup">
-                                                    <span>Get Started</span>
-                                                </Link>
-                                            </Button>
-                                        </>
+                                        <Button
+                                            asChild
+                                            size="sm">
+                                            <Link href="/login">
+                                                <span>Get Started</span>
+                                            </Link>
+                                        </Button>
                                     )
                                 )}
                             </div>
