@@ -91,7 +91,13 @@ export async function POST(req: NextRequest) {
         // Convert cents to dollars, then to IQD
         const amountUSD = amountCents / 100; // 2400 cents = $24.00
         const usdToIqdRate = parseFloat(process.env.USD_TO_IQD_RATE || '1310');
-        const amountInIQD = Math.round(amountUSD * usdToIqdRate); // $24 * 1310 = 31,440 IQD
+        let amountInIQD = Math.round(amountUSD * usdToIqdRate); // $24 * 1310 = 31,440 IQD
+
+        // [TESTING] Force Pro plan to exactly 0 IQD for testing completions
+        if (plan === 'pro') {
+            amountInIQD = 0;
+        }
+
         const currency = 'IQD';
 
         // ✅ SECURITY FIX #8: Currency validation
@@ -124,7 +130,7 @@ export async function POST(req: NextRequest) {
             throw txError;
         }
 
-        
+
         // Create Wayl payment link
         const webhookUrl = `${process.env.APP_URL}/api/webhooks/wayl`;
         const redirectUrl = `${process.env.APP_URL}/billing/processing?referenceId=${referenceId}`;

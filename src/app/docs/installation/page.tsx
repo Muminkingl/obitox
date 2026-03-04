@@ -55,12 +55,12 @@ const frameworkContent: Record<string, {
         title: 'Node.js',
         description: 'Get the ObitoX Node.js SDK',
         installCommands: [
-            { manager: 'npm', command: 'npm install obitox' },
-            { manager: 'yarn', command: 'yarn add obitox' },
-            { manager: 'pnpm', command: 'pnpm add obitox' },
-            { manager: 'bun', command: 'bun add obitox' },
+            { manager: 'npm', command: 'npm install @obitox/upload' },
+            { manager: 'yarn', command: 'yarn add @obitox/upload' },
+            { manager: 'pnpm', command: 'pnpm add @obitox/upload' },
+            { manager: 'bun', command: 'bun add @obitox/upload' },
         ],
-        initCode: `import ObitoX from 'obitox';
+        initCode: `import ObitoX from '@obitox/upload';
         
 const secureClient = new ObitoX({
   apiKey: process.env.OBITOX_API_KEY,     // ox_xxx...
@@ -74,13 +74,13 @@ OBITOX_API_SECRET=sk_xxxxxxxxxxxxxxxxxxxx`,
         title: 'Next.js',
         description: 'Get the ObitoX SDK for Next.js',
         installCommands: [
-            { manager: 'npm', command: 'npm install obitox' },
-            { manager: 'yarn', command: 'yarn add obitox' },
-            { manager: 'pnpm', command: 'pnpm add obitox' },
-            { manager: 'bun', command: 'bun add obitox' },
+            { manager: 'npm', command: 'npm install @obitox/upload' },
+            { manager: 'yarn', command: 'yarn add @obitox/upload' },
+            { manager: 'pnpm', command: 'pnpm add @obitox/upload' },
+            { manager: 'bun', command: 'bun add @obitox/upload' },
         ],
         initCode: `// lib/obitox.ts
-import ObitoX from 'obitox';
+import ObitoX from '@obitox/upload';
 
 // Server-side client (use in API routes, Server Components)
 export const obitox = new ObitoX({
@@ -99,14 +99,14 @@ UPLOADCARE_SECRET_KEY=your-secret-key`,
         title: 'Express',
         description: 'Get the ObitoX SDK for Express.js',
         installCommands: [
-            { manager: 'npm', command: 'npm install obitox multer' },
-            { manager: 'yarn', command: 'yarn add obitox multer' },
-            { manager: 'pnpm', command: 'pnpm add obitox multer' },
+            { manager: 'npm', command: 'npm install @obitox/upload multer' },
+            { manager: 'yarn', command: 'yarn add @obitox/upload multer' },
+            { manager: 'pnpm', command: 'pnpm add @obitox/upload multer' },
         ],
         initCode: `// server.js
 import express from 'express';
 import multer from 'multer';
-import ObitoX from 'obitox';
+import ObitoX from '@obitox/upload';
 
 const app = express();
 const upload = multer();
@@ -124,9 +124,9 @@ PORT=3000`,
         title: 'Python',
         description: 'Get the ObitoX SDK for Python',
         installCommands: [
-            { manager: 'pip', command: 'pip install obitox' },
-            { manager: 'poetry', command: 'poetry add obitox' },
-            { manager: 'pipenv', command: 'pipenv install obitox' },
+            { manager: 'pip', command: 'pip install @obitox/upload' },
+            { manager: 'poetry', command: 'poetry add @obitox/upload' },
+            { manager: 'pipenv', command: 'pipenv install @obitox/upload' },
         ],
         initCode: `# obitox_client.py
 from obitox import ObitoX
@@ -148,7 +148,7 @@ UPLOADCARE_SECRET_KEY=your-secret-key`,
         title: 'PHP',
         description: 'Get the ObitoX SDK for PHP',
         installCommands: [
-            { manager: 'composer', command: 'composer require obitox/obitox-php' },
+            { manager: 'composer', command: 'composer require obitox/upload' },
         ],
         initCode: `<?php
 // obitox.php
@@ -219,8 +219,8 @@ UPLOADCARE_SECRET_KEY=your-secret-key`,
         title: 'Ruby',
         description: 'Get the ObitoX SDK for Ruby',
         installCommands: [
-            { manager: 'gem', command: 'gem install obitox' },
-            { manager: 'bundler', command: 'bundle add obitox' },
+            { manager: 'gem', command: 'gem install @obitox/upload' },
+            { manager: 'bundler', command: 'bundle add @obitox/upload' },
         ],
         initCode: `# obitox.rb
 require 'obitox'
