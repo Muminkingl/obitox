@@ -98,9 +98,9 @@ const signedUrl = await privateClient.upload(file, {
 });
 setUrl('');`,
     download: `// Get signed URL for download
-const { downloadUrl } = await supabase.download({
+const downloadUrl = await supabase.download({
   filename: 'photo.jpg',
-  expiresIn: 3600 // 1 hour
+  expiresIn: 60 // 1 minute
 });
 console.log(downloadUrl);`,
     listBuckets: `const buckets = await supabase.listBuckets();
@@ -184,9 +184,9 @@ const signedUrl = await privateBucket.upload(file, {
   fileUrl: 'https://...supabase.co/storage/v1/object/public/avatars/photo.jpg'
 });`,
     download: `// Get signed URL for download
-const { downloadUrl } = await supabase.download({
+const downloadUrl = await supabase.download({
   filename: 'photo.jpg',
-  expiresIn: 3600 // 1 hour
+  expiresIn: 60 // 1 minute
 });
 console.log(downloadUrl);`,
     listBuckets: `const buckets = await supabase.listBuckets();
@@ -272,9 +272,9 @@ const signedUrl = await privateClient.upload(file, {
 });
 fileUrl.value = '';`,
     download: `// Get signed URL for download
-const { downloadUrl } = await supabase.download({
+const downloadUrl = await supabase.download({
   filename: 'photo.jpg',
-  expiresIn: 3600 // 1 hour
+  expiresIn: 60 // 1 minute
 });
 console.log(downloadUrl);`,
     listBuckets: `const buckets = await supabase.listBuckets();`,
@@ -354,9 +354,9 @@ const signedUrl = await privateClient.upload(file, {
 });
 fileUrl = '';`,
     download: `// Get signed URL for download
-const { downloadUrl } = await supabase.download({
+const downloadUrl = await supabase.download({
   filename: 'photo.jpg',
-  expiresIn: 3600 // 1 hour
+  expiresIn: 60 // 1 minute
 });
 console.log(downloadUrl);`,
     listBuckets: `const buckets = await supabase.listBuckets();`,
@@ -433,9 +433,9 @@ export class UploadService {
 }`,
     download: `// Get signed URL for download
 async getUrl(filename: string): Promise<string> {
-  const { downloadUrl } = await this.supabase.download({
+  const downloadUrl = await this.supabase.download({
     filename,
-    expiresIn: 3600 // 1 hour
+    expiresIn: 60 // 1 minute
   });
   console.log(downloadUrl);
   return downloadUrl;
@@ -519,9 +519,9 @@ const signedUrl = await privateBucket.upload(file!.data, {
   fileUrl: 'https://...'
 });`,
     download: `// Get signed URL for download
-const { downloadUrl } = await supabase.download({
+const downloadUrl = await supabase.download({
   filename: 'photo.jpg',
-  expiresIn: 3600 // 1 hour
+  expiresIn: 60 // 1 minute
 });
 console.log(downloadUrl);`,
     listBuckets: `const buckets = await supabase.listBuckets();`,
@@ -594,9 +594,9 @@ const signedUrl = await supabasePrivate.upload(file, {
   fileUrl: 'https://...supabase.co/storage/v1/object/public/avatars/photo.jpg'
 });`,
     download: `// Get signed URL for download
-const { downloadUrl } = await supabase.download({
+const downloadUrl = await supabase.download({
   filename: 'photo.jpg',
-  expiresIn: 3600 // 1 hour
+  expiresIn: 60 // 1 minute
 });
 console.log(downloadUrl);`,
     listBuckets: `const buckets = await supabase.listBuckets();
@@ -686,9 +686,9 @@ const supabase = client.supabase({
 });`,
     download: `// Get signed URL for download
 app.get('/download/:filename', async (req, res) => {
-  const { downloadUrl } = await supabase.download({
+  const downloadUrl = await supabase.download({
     filename: req.params.filename,
-    expiresIn: 3600 // 1 hour
+    expiresIn: 60 // 1 minute
   });
   res.redirect(downloadUrl);
 });`,
@@ -766,7 +766,7 @@ signed_url = private_bucket.upload(file, {
     download: `# Get signed URL for download
 result = supabase.download({
     'filename': 'photo.jpg',
-    'expires_in': 3600 # 1 hour
+    'expires_in': 60 # 1 minute
 })
 print(result['download_url'])`,
     listBuckets: `buckets = supabase.list_buckets()
@@ -854,7 +854,7 @@ url = private_bucket.upload(file_obj.read(), {
     download: `# Get signed URL for download
 signed_data = supabase_service.download({
     'filename': 'private-image.jpg',
-    'expires_in': 3600 # 1 hour
+    'expires_in': 60 # 1 minute
 })
 download_url = signed_data['download_url']`,
     listBuckets: `buckets = supabase_service.list_buckets()
@@ -943,7 +943,7 @@ async def private_upload(file: UploadFile):
 async def get_download_link(filename: str, supabase=Depends(get_supabase_service)):
     result = supabase.download({
         'filename': filename,
-        'expires_in': 3600 # 1 hour
+        'expires_in': 60 # 1 minute
     })
     return {"download_url": result['download_url']}`,
     listBuckets: `buckets = supabase.list_buckets()
@@ -999,7 +999,7 @@ $url = $private->upload($file, ['filename' => 'doc.pdf']);`,
     download: `// Get signed URL for download
 $res = $supabase->download([
     'filename' => 'photo.jpg',
-    'expires_in' => 3600 // 1 hour
+    'expires_in' => 60 // 1 minute
 ]);
 echo $res['download_url'];`,
     listBuckets: `$buckets = $supabase->listBuckets();`,
@@ -1084,7 +1084,7 @@ $signedUrl = $private->upload($fileContent, [
     download: `// Get signed URL for download
 $result = $supabase->download([
     'filename' => 'private-report.pdf',
-    'expires_in' => 3600 // 1 hour
+    'expires_in' => 60 // 1 minute
 ]);
 return redirect($result['download_url']);`,
     listBuckets: `$buckets = $supabase->listBuckets();
@@ -1177,7 +1177,7 @@ url, err := private.Upload(file, obitox.UploadOptions{
     download: `// Get signed URL for download
 result, err := supabase.Download(obitox.DownloadOptions{
     Filename:  "secure-report.pdf",
-    ExpiresIn: 3600, // 1 hour
+    ExpiresIn: 60, // 1 minute
 })
 if err == nil {
     fmt.Println("Signed URL:", result.DownloadUrl)
