@@ -1,43 +1,43 @@
 // Framework definitions - 14 frameworks
 export const frameworks = [
-    // Frontend
-    { id: 'react', name: 'React', lang: 'tsx' },
-    { id: 'nextjs', name: 'Next.js', lang: 'tsx' },
-    { id: 'vue', name: 'Vue.js', lang: 'typescript' },
-    { id: 'svelte', name: 'Svelte', lang: 'typescript' },
-    { id: 'angular', name: 'Angular', lang: 'typescript' },
-    { id: 'nuxt', name: 'Nuxt.js', lang: 'typescript' },
-    // Backend
-    { id: 'node', name: 'Node.js', lang: 'typescript' },
-    { id: 'express', name: 'Express', lang: 'typescript' },
-    { id: 'python', name: 'Python', lang: 'python' },
-    { id: 'django', name: 'Django', lang: 'python' },
-    { id: 'fastapi', name: 'FastAPI', lang: 'python' },
-    { id: 'php', name: 'PHP', lang: 'php' },
-    { id: 'laravel', name: 'Laravel', lang: 'php' },
-    { id: 'go', name: 'Go', lang: 'go' }
+  // Frontend
+  { id: 'react', name: 'React', lang: 'tsx' },
+  { id: 'nextjs', name: 'Next.js', lang: 'tsx' },
+  { id: 'vue', name: 'Vue.js', lang: 'typescript' },
+  { id: 'svelte', name: 'Svelte', lang: 'typescript' },
+  { id: 'angular', name: 'Angular', lang: 'typescript' },
+  { id: 'nuxt', name: 'Nuxt.js', lang: 'typescript' },
+  // Backend
+  { id: 'node', name: 'Node.js', lang: 'typescript' },
+  { id: 'express', name: 'Express', lang: 'typescript' },
+  { id: 'python', name: 'Python', lang: 'python' },
+  { id: 'django', name: 'Django', lang: 'python' },
+  { id: 'fastapi', name: 'FastAPI', lang: 'python' },
+  { id: 'php', name: 'PHP', lang: 'php' },
+  { id: 'laravel', name: 'Laravel', lang: 'php' },
+  { id: 'go', name: 'Go', lang: 'go' }
 ];
 
 export type SupabaseExamples = {
-    setup: string;
-    basicUpload: string;
-    progressTracking: string;
-    privateUpload: string;
-    magicBytes: string;
-    deleteFile: string;
-    download: string;
-    listBuckets: string;
-    webhookAuto: string;
-    webhookManual: string;
-    cancellation: string;
+  setup: string;
+  basicUpload: string;
+  progressTracking: string;
+  privateUpload: string;
+  magicBytes: string;
+  deleteFile: string;
+  download: string;
+  listBuckets: string;
+  webhookAuto: string;
+  webhookManual: string;
+  cancellation: string;
 };
 
 export const supabaseCodeExamples: Record<string, SupabaseExamples> = {
-    // ═══════════════════════════════════════════
-    // FRONTEND FRAMEWORKS
-    // ═══════════════════════════════════════════
-    react: {
-        setup: `import { useState } from 'react';
+  // ═══════════════════════════════════════════
+  // FRONTEND FRAMEWORKS
+  // ═══════════════════════════════════════════
+  react: {
+    setup: `import { useState } from 'react';
 import ObitoX from '@obitox/upload';
 
 const client = new ObitoX({
@@ -55,7 +55,7 @@ export default function FileUploader() {
   const [url, setUrl] = useState('');
   // See examples below for usage
 }`,
-        basicUpload: `const [uploading, setUploading] = useState(false);
+    basicUpload: `const [uploading, setUploading] = useState(false);
 
 const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
   const file = e.target.files?.[0];
@@ -70,7 +70,7 @@ const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 };
 
 return <input type="file" onChange={handleUpload} disabled={uploading} />;`,
-        progressTracking: `const [progress, setProgress] = useState(0);
+    progressTracking: `const [progress, setProgress] = useState(0);
 
 const fileUrl = await supabase.upload(file, {
   filename: file.name,
@@ -78,7 +78,7 @@ const fileUrl = await supabase.upload(file, {
 });
 
 // <progress value={progress} max={100} />`,
-        privateUpload: `// Initialize private client
+    privateUpload: `// Initialize private client
 const privateClient = client.supabase({
   url: process.env.REACT_APP_SUPABASE_URL!,
   token: process.env.REACT_APP_SUPABASE_KEY!,
@@ -89,22 +89,23 @@ const signedUrl = await privateClient.upload(file, {
   filename: 'contract.pdf'
 });
 // Returns signed URL`,
-        magicBytes: `const url = await supabase.upload(file, {
+    magicBytes: `const url = await supabase.upload(file, {
   filename: 'photo.jpg',
   validation: 'images'
 });`,
-        deleteFile: `await supabase.delete({
+    deleteFile: `await supabase.delete({
   fileUrl: 'https://...supabase.co/storage/v1/object/public/avatars/photo.jpg'
 });
 setUrl('');`,
-        download: `const { downloadUrl } = await supabase.download({
+    download: `// Get signed URL for download
+const { downloadUrl } = await supabase.download({
   filename: 'photo.jpg',
-  expiresIn: 3600 // 1 hour signed URL
+  expiresIn: 3600 // 1 hour
 });
-window.open(downloadUrl);`,
-        listBuckets: `const buckets = await supabase.listBuckets();
+console.log(downloadUrl);`,
+    listBuckets: `const buckets = await supabase.listBuckets();
 console.log(buckets);`,
-        webhookAuto: `const url = await supabase.upload(file, {
+    webhookAuto: `const url = await supabase.upload(file, {
   filename: 'report.jpg',
   webhook: {
     url: 'https://myapp.com/webhooks/upload',
@@ -112,7 +113,7 @@ console.log(buckets);`,
     metadata: { userId: 'user_456' }
   }
 });`,
-        webhookManual: `const url = await supabase.upload(file, {
+    webhookManual: `const url = await supabase.upload(file, {
   filename: 'invoice.jpg',
   webhook: {
     url: 'https://myapp.com/webhooks/upload',
@@ -122,7 +123,7 @@ console.log(buckets);`,
     metadata: { userId: 'user_123' }
   }
 });`,
-        cancellation: `const controller = new AbortController();
+    cancellation: `const controller = new AbortController();
 
 const uploadPromise = supabase.upload(file, {
   filename: 'large.jpg',
@@ -130,10 +131,10 @@ const uploadPromise = supabase.upload(file, {
     if (p > 50) controller.abort();
   }
 });`
-    },
+  },
 
-    nextjs: {
-        setup: `// app/lib/obitox.ts
+  nextjs: {
+    setup: `// app/lib/obitox.ts
 import ObitoX from '@obitox/upload';
 
 const client = new ObitoX({
@@ -146,7 +147,7 @@ export const supabase = client.supabase({
   token: process.env.SUPABASE_SERVICE_ROLE_KEY!,
   bucket: 'avatars'
 });`,
-        basicUpload: `// app/api/upload/route.ts
+    basicUpload: `// app/api/upload/route.ts
 import { supabase } from '@/lib/obitox';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -160,12 +161,12 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({ url: fileUrl });
 }`,
-        progressTracking: `// Client-side progress via XHR or fetch stream
+    progressTracking: `// Client-side progress via XHR or fetch stream
 const fileUrl = await supabase.upload(file, {
   filename: file.name,
   onProgress: (percent) => console.log(\`\${percent}%\`)
 });`,
-        privateUpload: `// Server action or API route
+    privateUpload: `// Server action or API route
 const privateBucket = client.supabase({
   url: process.env.SUPABASE_URL!,
   token: process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -175,20 +176,22 @@ const privateBucket = client.supabase({
 const signedUrl = await privateBucket.upload(file, {
   filename: 'contract.pdf'
 });`,
-        magicBytes: `const url = await supabase.upload(file, {
+    magicBytes: `const url = await supabase.upload(file, {
   filename: 'photo.jpg',
   validation: 'images'
 });`,
-        deleteFile: `await supabase.delete({
+    deleteFile: `await supabase.delete({
   fileUrl: 'https://...supabase.co/storage/v1/object/public/avatars/photo.jpg'
 });`,
-        download: `const { downloadUrl } = await supabase.download({
+    download: `// Get signed URL for download
+const { downloadUrl } = await supabase.download({
   filename: 'photo.jpg',
-  expiresIn: 60 // 1 minute
-});`,
-        listBuckets: `const buckets = await supabase.listBuckets();
+  expiresIn: 3600 // 1 hour
+});
+console.log(downloadUrl);`,
+    listBuckets: `const buckets = await supabase.listBuckets();
 return NextResponse.json(buckets);`,
-        webhookAuto: `const url = await supabase.upload(file, {
+    webhookAuto: `const url = await supabase.upload(file, {
   filename: 'report.jpg',
   webhook: {
     url: 'https://myapp.com/webhooks/upload',
@@ -196,7 +199,7 @@ return NextResponse.json(buckets);`,
     metadata: { userId: '123' }
   }
 });`,
-        webhookManual: `const url = await supabase.upload(file, {
+    webhookManual: `const url = await supabase.upload(file, {
   filename: 'invoice.jpg',
   webhook: {
     url: 'https://myapp.com/webhooks/upload',
@@ -206,7 +209,7 @@ return NextResponse.json(buckets);`,
     metadata: { userId: '123' }
   }
 });`,
-        cancellation: `const controller = new AbortController();
+    cancellation: `const controller = new AbortController();
 setTimeout(() => controller.abort(), 5000);
 
 try {
@@ -217,10 +220,10 @@ try {
 } catch (err) {
   return NextResponse.json({ error: 'Cancelled' }, { status: 499 });
 }`
-    },
+  },
 
-    vue: {
-        setup: `<script setup lang="ts">
+  vue: {
+    setup: `<script setup lang="ts">
 import { ref } from 'vue';
 import ObitoX from '@obitox/upload';
 
@@ -237,7 +240,7 @@ const supabase = client.supabase({
 
 const fileUrl = ref('');
 </script>`,
-        basicUpload: `async function handleUpload(event: Event) {
+    basicUpload: `async function handleUpload(event: Event) {
   const file = (event.target as HTMLInputElement).files?.[0];
   if (!file) return;
 
@@ -245,13 +248,13 @@ const fileUrl = ref('');
     filename: file.name
   });
 }`,
-        progressTracking: `const progress = ref(0);
+    progressTracking: `const progress = ref(0);
 
 fileUrl.value = await supabase.upload(file, {
   filename: file.name,
   onProgress: (p) => { progress.value = p; }
 });`,
-        privateUpload: `// Initialize private client
+    privateUpload: `// Initialize private client
 const privateClient = client.supabase({
   bucket: 'private-docs',
   // ... other config
@@ -260,27 +263,29 @@ const privateClient = client.supabase({
 const signedUrl = await privateClient.upload(file, {
   filename: 'contract.pdf'
 });`,
-        magicBytes: `const url = await supabase.upload(file, {
+    magicBytes: `const url = await supabase.upload(file, {
   filename: 'photo.jpg',
   validation: 'images'
 });`,
-        deleteFile: `await supabase.delete({
+    deleteFile: `await supabase.delete({
   fileUrl: fileUrl.value
 });
 fileUrl.value = '';`,
-        download: `const { downloadUrl } = await supabase.download({
+    download: `// Get signed URL for download
+const { downloadUrl } = await supabase.download({
   filename: 'photo.jpg',
-  expiresIn: 3600
-});`,
-        listBuckets: `const buckets = await supabase.listBuckets();`,
-        webhookAuto: `const url = await supabase.upload(file, {
+  expiresIn: 3600 // 1 hour
+});
+console.log(downloadUrl);`,
+    listBuckets: `const buckets = await supabase.listBuckets();`,
+    webhookAuto: `const url = await supabase.upload(file, {
   filename: 'report.jpg',
   webhook: {
     url: 'https://myapp.com/webhooks/upload',
     trigger: 'auto'
   }
 });`,
-        webhookManual: `const url = await supabase.upload(file, {
+    webhookManual: `const url = await supabase.upload(file, {
   filename: 'invoice.jpg',
   webhook: {
     url: 'https://myapp.com/webhooks/upload',
@@ -288,7 +293,7 @@ fileUrl.value = '';`,
     autoConfirm: false
   }
 });`,
-        cancellation: `const controller = new AbortController();
+    cancellation: `const controller = new AbortController();
 onUnmounted(() => controller.abort());
 
 try {
@@ -299,10 +304,10 @@ try {
 } catch (e) {
   console.log('Cancelled');
 }`
-    },
+  },
 
-    svelte: {
-        setup: `<script lang="ts">
+  svelte: {
+    setup: `<script lang="ts">
 import ObitoX from '@obitox/upload';
 
 const client = new ObitoX({
@@ -318,7 +323,7 @@ const supabase = client.supabase({
 
 let fileUrl = $state('');
 </script>`,
-        basicUpload: `async function handleUpload(event: Event) {
+    basicUpload: `async function handleUpload(event: Event) {
   const file = (event.target as HTMLInputElement).files?.[0];
   if (!file) return;
 
@@ -326,13 +331,13 @@ let fileUrl = $state('');
     filename: file.name
   });
 }`,
-        progressTracking: `let progress = $state(0);
+    progressTracking: `let progress = $state(0);
 
 fileUrl = await supabase.upload(file, {
   filename: file.name,
   onProgress: (p) => { progress = p; }
 });`,
-        privateUpload: `const privateClient = client.supabase({
+    privateUpload: `const privateClient = client.supabase({
   bucket: 'private-docs',
   // ...
 });
@@ -340,26 +345,29 @@ fileUrl = await supabase.upload(file, {
 const signedUrl = await privateClient.upload(file, {
   filename: 'contract.pdf'
 });`,
-        magicBytes: `const url = await supabase.upload(file, {
+    magicBytes: `const url = await supabase.upload(file, {
   filename: 'photo.jpg',
   validation: 'images'
 });`,
-        deleteFile: `await supabase.delete({
+    deleteFile: `await supabase.delete({
   fileUrl: fileUrl
 });
 fileUrl = '';`,
-        download: `const { downloadUrl } = await supabase.download({
-  filename: 'photo.jpg'
-});`,
-        listBuckets: `const buckets = await supabase.listBuckets();`,
-        webhookAuto: `const url = await supabase.upload(file, {
+    download: `// Get signed URL for download
+const { downloadUrl } = await supabase.download({
+  filename: 'photo.jpg',
+  expiresIn: 3600 // 1 hour
+});
+console.log(downloadUrl);`,
+    listBuckets: `const buckets = await supabase.listBuckets();`,
+    webhookAuto: `const url = await supabase.upload(file, {
   filename: 'report.jpg',
   webhook: {
     url: 'https://myapp.com/webhooks/upload',
     trigger: 'auto'
   }
 });`,
-        webhookManual: `const url = await supabase.upload(file, {
+    webhookManual: `const url = await supabase.upload(file, {
   filename: 'invoice.jpg',
   webhook: {
     url: 'https://myapp.com/webhooks/upload',
@@ -367,15 +375,15 @@ fileUrl = '';`,
     autoConfirm: false
   }
 });`,
-        cancellation: `import { onDestroy } from 'svelte';
+    cancellation: `import { onDestroy } from 'svelte';
 const controller = new AbortController();
 onDestroy(() => controller.abort());
 
 await supabase.upload(file, { filename: 'large.jpg' });`
-    },
+  },
 
-    angular: {
-        setup: `// upload.service.ts
+  angular: {
+    setup: `// upload.service.ts
 import { Injectable } from '@angular/core';
 import ObitoX from '@obitox/upload';
 import { environment } from '../environments/environment';
@@ -393,12 +401,12 @@ export class UploadService {
     bucket: 'avatars'
   });
 }`,
-        basicUpload: `async upload(file: File): Promise<string> {
+    basicUpload: `async upload(file: File): Promise<string> {
   return this.supabase.upload(file, {
     filename: file.name
   });
 }`,
-        progressTracking: `async uploadWithProgress(
+    progressTracking: `async uploadWithProgress(
   file: File,
   onProgress: (p: number) => void
 ): Promise<string> {
@@ -407,33 +415,35 @@ export class UploadService {
     onProgress: onProgress
   });
 }`,
-        privateUpload: `async uploadPrivate(file: File): Promise<string> {
+    privateUpload: `async uploadPrivate(file: File): Promise<string> {
   const privateBucket = this.client.supabase({
     bucket: 'private-docs',
     // ...
   });
   return privateBucket.upload(file, { filename: 'doc.pdf' });
 }`,
-        magicBytes: `async uploadValidated(file: File): Promise<string> {
+    magicBytes: `async uploadValidated(file: File): Promise<string> {
   return this.supabase.upload(file, {
     filename: file.name,
     validation: 'images'
   });
 }`,
-        deleteFile: `async delete(url: string): Promise<void> {
+    deleteFile: `async delete(url: string): Promise<void> {
   await this.supabase.delete({ fileUrl: url });
 }`,
-        download: `async getUrl(filename: string): Promise<string> {
+    download: `// Get signed URL for download
+async getUrl(filename: string): Promise<string> {
   const { downloadUrl } = await this.supabase.download({
     filename,
-    expiresIn: 3600
+    expiresIn: 3600 // 1 hour
   });
+  console.log(downloadUrl);
   return downloadUrl;
 }`,
-        listBuckets: `async getBuckets(): Promise<any[]> {
+    listBuckets: `async getBuckets(): Promise<any[]> {
   return this.supabase.listBuckets();
 }`,
-        webhookAuto: `async uploadHook(file: File): Promise<string> {
+    webhookAuto: `async uploadHook(file: File): Promise<string> {
   return this.supabase.upload(file, {
     filename: file.name,
     webhook: {
@@ -442,7 +452,7 @@ export class UploadService {
     }
   });
 }`,
-        webhookManual: `async uploadManual(file: File): Promise<string> {
+    webhookManual: `async uploadManual(file: File): Promise<string> {
   return this.supabase.upload(file, {
     filename: file.name,
     webhook: {
@@ -451,7 +461,7 @@ export class UploadService {
     }
   });
 }`,
-        cancellation: `private controller = new AbortController();
+    cancellation: `private controller = new AbortController();
 
 cancel() {
   this.controller.abort();
@@ -463,10 +473,10 @@ async upload(file: File) {
     signal: this.controller.signal // if supported
   });
 }`
-    },
+  },
 
-    nuxt: {
-        setup: `// server/utils/obitox.ts
+  nuxt: {
+    setup: `// server/utils/obitox.ts
 import ObitoX from '@obitox/upload';
 
 const client = new ObitoX({
@@ -479,7 +489,7 @@ export const supabase = client.supabase({
   token: process.env.SUPABASE_SERVICE_ROLE_KEY!,
   bucket: 'avatars'
 });`,
-        basicUpload: `// server/api/upload.post.ts
+    basicUpload: `// server/api/upload.post.ts
 import { supabase } from '../utils/obitox';
 
 export default defineEventHandler(async (event) => {
@@ -492,41 +502,44 @@ export default defineEventHandler(async (event) => {
 
   return { url: fileUrl };
 });`,
-        progressTracking: `// Progress is handled client-side or via stream
+    progressTracking: `// Progress is handled client-side or via stream
 const fileUrl = await supabase.upload(file!.data, {
   filename: file!.filename,
   onProgress: (p) => console.log(p)
 });`,
-        privateUpload: `const privateBucket = client.supabase({ bucket: 'private' });
+    privateUpload: `const privateBucket = client.supabase({ bucket: 'private' });
 const signedUrl = await privateBucket.upload(file!.data, {
   filename: 'doc.pdf'
 });`,
-        magicBytes: `const url = await supabase.upload(file!.data, {
+    magicBytes: `const url = await supabase.upload(file!.data, {
   filename: 'photo.jpg',
   validation: 'images'
 });`,
-        deleteFile: `await supabase.delete({
+    deleteFile: `await supabase.delete({
   fileUrl: 'https://...'
 });`,
-        download: `const { downloadUrl } = await supabase.download({
-  filename: 'photo.jpg'
-});`,
-        listBuckets: `const buckets = await supabase.listBuckets();`,
-        webhookAuto: `const url = await supabase.upload(file!.data, {
+    download: `// Get signed URL for download
+const { downloadUrl } = await supabase.download({
+  filename: 'photo.jpg',
+  expiresIn: 3600 // 1 hour
+});
+console.log(downloadUrl);`,
+    listBuckets: `const buckets = await supabase.listBuckets();`,
+    webhookAuto: `const url = await supabase.upload(file!.data, {
   filename: 'report.jpg',
   webhook: {
     url: 'https://myapp.com/webhooks/upload',
     trigger: 'auto'
   }
 });`,
-        webhookManual: `const url = await supabase.upload(file!.data, {
+    webhookManual: `const url = await supabase.upload(file!.data, {
   filename: 'invoice.jpg',
   webhook: {
     url: 'https://myapp.com/webhooks/upload',
     trigger: 'manual'
   }
 });`,
-        cancellation: `const controller = new AbortController();
+    cancellation: `const controller = new AbortController();
 setTimeout(() => controller.abort(), 5000);
 
 try {
@@ -534,13 +547,13 @@ try {
 } catch (e) {
   throw createError({ statusCode: 499, message: 'Cancelled' });
 }`
-    },
+  },
 
-    // ═══════════════════════════════════════════
-    // BACKEND FRAMEWORKS
-    // ═══════════════════════════════════════════
-    node: {
-        setup: `import ObitoX from '@obitox/upload';
+  // ═══════════════════════════════════════════
+  // BACKEND FRAMEWORKS
+  // ═══════════════════════════════════════════
+  node: {
+    setup: `import ObitoX from '@obitox/upload';
 
 const client = new ObitoX({
   apiKey: process.env.OBITOX_API_KEY,
@@ -552,18 +565,18 @@ const supabase = client.supabase({
   token: process.env.SUPABASE_SERVICE_ROLE_KEY,
   bucket: 'avatars'
 });`,
-        basicUpload: `const fileUrl = await supabase.upload(file, {
+    basicUpload: `const fileUrl = await supabase.upload(file, {
   filename: 'photo.jpg'
 });
 
 console.log(fileUrl); // https://...supabase.co/storage/v1/object/public/avatars/photo.jpg`,
-        progressTracking: `const fileUrl = await supabase.upload(file, {
+    progressTracking: `const fileUrl = await supabase.upload(file, {
   filename: 'video.mp4',
   onProgress: (percent, uploaded, total) => {
     console.log(\`\${percent}% — \${uploaded}/\${total} bytes\`);
   }
 });`,
-        privateUpload: `const supabasePrivate = client.supabase({
+    privateUpload: `const supabasePrivate = client.supabase({
   url: process.env.SUPABASE_URL,
   token: process.env.SUPABASE_KEY,
   bucket: 'private-docs'
@@ -573,29 +586,29 @@ const signedUrl = await supabasePrivate.upload(file, {
   filename: 'contract.pdf'
 });
 // Returns signed URL`,
-        magicBytes: `const url = await supabase.upload(file, {
+    magicBytes: `const url = await supabase.upload(file, {
   filename: 'photo.jpg',
   validation: 'images'
 });`,
-        deleteFile: `await supabase.delete({
+    deleteFile: `await supabase.delete({
   fileUrl: 'https://...supabase.co/storage/v1/object/public/avatars/photo.jpg'
 });`,
-        download: `// Get signed URL for download
+    download: `// Get signed URL for download
 const { downloadUrl } = await supabase.download({
   filename: 'photo.jpg',
   expiresIn: 3600 // 1 hour
 });
 console.log(downloadUrl);`,
-        listBuckets: `const buckets = await supabase.listBuckets();
+    listBuckets: `const buckets = await supabase.listBuckets();
 buckets.forEach(b => console.log(b.name));`,
-        webhookAuto: `const url = await supabase.upload(file, {
+    webhookAuto: `const url = await supabase.upload(file, {
   filename: 'report.jpg',
   webhook: {
     url: 'https://myapp.com/webhooks/upload',
     trigger: 'auto'
   }
 });`,
-        webhookManual: `const url = await supabase.upload(file, {
+    webhookManual: `const url = await supabase.upload(file, {
   filename: 'invoice.jpg',
   webhook: {
     url: 'https://myapp.com/webhooks/upload',
@@ -604,7 +617,7 @@ buckets.forEach(b => console.log(b.name));`,
   }
 });
 // Call confirm endpoint later`,
-        cancellation: `const abortController = new AbortController();
+    cancellation: `const abortController = new AbortController();
 
 try {
   const uploadPromise = supabase.upload(largeFile, {
@@ -617,10 +630,10 @@ try {
 } catch (error) {
   console.log('Upload cancelled');
 }`
-    },
+  },
 
-    express: {
-        setup: `import express from 'express';
+  express: {
+    setup: `import express from 'express';
 import multer from 'multer';
 import ObitoX from '@obitox/upload';
 
@@ -637,20 +650,20 @@ const supabase = client.supabase({
   token: process.env.SUPABASE_KEY,
   bucket: 'avatars'
 });`,
-        basicUpload: `app.post('/upload', upload.single('file'), async (req, res) => {
+    basicUpload: `app.post('/upload', upload.single('file'), async (req, res) => {
   const fileUrl = await supabase.upload(req.file.buffer, {
     filename: req.file.originalname
   });
   res.json({ url: fileUrl });
 });`,
-        progressTracking: `app.post('/upload', upload.single('file'), async (req, res) => {
+    progressTracking: `app.post('/upload', upload.single('file'), async (req, res) => {
   const fileUrl = await supabase.upload(req.file.buffer, {
     filename: req.file.originalname,
     onProgress: (percent) => console.log(\`\${percent}%\`)
   });
   res.json({ url: fileUrl });
 });`,
-        privateUpload: `app.post('/upload-private', upload.single('file'), async (req, res) => {
+    privateUpload: `app.post('/upload-private', upload.single('file'), async (req, res) => {
   const privateBucket = client.supabase({
     bucket: 'private-docs',
     // ...
@@ -660,29 +673,30 @@ const supabase = client.supabase({
   });
   res.json({ signedUrl: url });
 });`,
-        magicBytes: `app.post('/upload', upload.single('file'), async (req, res) => {
+    magicBytes: `app.post('/upload', upload.single('file'), async (req, res) => {
   const url = await supabase.upload(req.file.buffer, {
     filename: req.file.originalname,
     validation: 'images'
   });
   res.json({ url });
 });`,
-        deleteFile: `app.delete('/file', async (req, res) => {
+    deleteFile: `app.delete('/file', async (req, res) => {
   await supabase.delete({ fileUrl: req.body.url });
   res.json({ deleted: true });
 });`,
-        download: `app.get('/download/:filename', async (req, res) => {
+    download: `// Get signed URL for download
+app.get('/download/:filename', async (req, res) => {
   const { downloadUrl } = await supabase.download({
     filename: req.params.filename,
-    expiresIn: 60
+    expiresIn: 3600 // 1 hour
   });
   res.redirect(downloadUrl);
 });`,
-        listBuckets: `app.get('/buckets', async (req, res) => {
+    listBuckets: `app.get('/buckets', async (req, res) => {
   const buckets = await supabase.listBuckets();
   res.json(buckets);
 });`,
-        webhookAuto: `app.post('/upload', upload.single('file'), async (req, res) => {
+    webhookAuto: `app.post('/upload', upload.single('file'), async (req, res) => {
   const url = await supabase.upload(req.file.buffer, {
     filename: req.file.originalname,
     webhook: {
@@ -692,7 +706,7 @@ const supabase = client.supabase({
   });
   res.json({ url });
 });`,
-        webhookManual: `app.post('/upload', upload.single('file'), async (req, res) => {
+    webhookManual: `app.post('/upload', upload.single('file'), async (req, res) => {
   const url = await supabase.upload(req.file.buffer, {
     filename: req.file.originalname,
     webhook: {
@@ -702,15 +716,15 @@ const supabase = client.supabase({
   });
   res.json({ url });
 });`,
-        cancellation: `app.post('/upload', upload.single('file'), async (req, res) => {
+    cancellation: `app.post('/upload', upload.single('file'), async (req, res) => {
   const controller = new AbortController();
   req.on('close', () => controller.abort());
   // ... upload logic
 });`
-    },
+  },
 
-    python: {
-        setup: `from obitox import ObitoX
+  python: {
+    setup: `from obitox import ObitoX
 import os
 
 client = ObitoX(
@@ -723,18 +737,18 @@ supabase = client.supabase({
     'token': os.getenv('SUPABASE_KEY'),
     'bucket': 'avatars'
 })`,
-        basicUpload: `file_url = supabase.upload(file, {
+    basicUpload: `file_url = supabase.upload(file, {
     'filename': 'photo.jpg'
 })
 print(file_url)`,
-        progressTracking: `def on_progress(p, u, t):
+    progressTracking: `def on_progress(p, u, t):
     print(f'{p}%')
 
 url = supabase.upload(file, {
     'filename': 'video.mp4',
     'on_progress': on_progress
 })`,
-        privateUpload: `private_bucket = client.supabase({
+    privateUpload: `private_bucket = client.supabase({
     'bucket': 'private-docs',
     # ...
 })
@@ -742,43 +756,44 @@ url = supabase.upload(file, {
 signed_url = private_bucket.upload(file, {
     'filename': 'contract.pdf'
 })`,
-        magicBytes: `url = supabase.upload(file, {
+    magicBytes: `url = supabase.upload(file, {
     'filename': 'photo.jpg',
     'validation': 'images'
 })`,
-        deleteFile: `supabase.delete({
+    deleteFile: `supabase.delete({
     'file_url': 'https://.../photo.jpg'
 })`,
-        download: `result = supabase.download({
+    download: `# Get signed URL for download
+result = supabase.download({
     'filename': 'photo.jpg',
-    'expires_in': 3600
+    'expires_in': 3600 # 1 hour
 })
 print(result['download_url'])`,
-        listBuckets: `buckets = supabase.list_buckets()
+    listBuckets: `buckets = supabase.list_buckets()
 for b in buckets:
     print(b['name'])`,
-        webhookAuto: `url = supabase.upload(file, {
+    webhookAuto: `url = supabase.upload(file, {
     'filename': 'report.jpg',
     'webhook': {
         'url': 'https://myapp.com/webhooks/upload',
         'trigger': 'auto'
     }
 })`,
-        webhookManual: `url = supabase.upload(file, {
+    webhookManual: `url = supabase.upload(file, {
     'filename': 'invoice.jpg',
     'webhook': {
         'url': 'https://myapp.com/webhooks/upload',
         'trigger': 'manual'
     }
 })`,
-        cancellation: `# Python cancellation via threading/async
+    cancellation: `# Python cancellation via threading/async
 import threading
 cancel_event = threading.Event()
 # ... pass event to upload`
-    },
+  },
 
-    django: {
-        setup: `# settings.py
+  django: {
+    setup: `# settings.py
 OBITOX_CONFIG = {
     'api_key': os.getenv('OBITOX_API_KEY'),
     'api_secret': os.getenv('OBITOX_API_SECRET')
@@ -796,7 +811,7 @@ from obitox import ObitoX
 
 _client = ObitoX(**settings.OBITOX_CONFIG)
 supabase_service = _client.supabase(settings.SUPABASE_CONFIG)`,
-        basicUpload: `# views.py
+    basicUpload: `# views.py
 from django.http import JsonResponse
 from .services.obitox import supabase_service
 
@@ -811,7 +826,7 @@ def upload_file(request):
         
         return JsonResponse({'url': url})
     return JsonResponse({'error': 'No file'}, status=400)`,
-        progressTracking: `def upload_with_progress(file_obj):
+    progressTracking: `def upload_with_progress(file_obj):
     def progress_callback(percent, uploaded, total):
         print(f"Uploaded: {percent}%")
 
@@ -820,7 +835,7 @@ def upload_file(request):
         'on_progress': progress_callback
     })
     return url`,
-        privateUpload: `private_bucket = _client.supabase({
+    privateUpload: `private_bucket = _client.supabase({
     'url': settings.SUPABASE_URL,
     'token': settings.SUPABASE_KEY,
     'bucket': 'private-docs'
@@ -829,22 +844,23 @@ def upload_file(request):
 url = private_bucket.upload(file_obj.read(), {
     'filename': 'contract.pdf'
 })`,
-        magicBytes: `url = supabase_service.upload(file_obj.read(), {
+    magicBytes: `url = supabase_service.upload(file_obj.read(), {
     'filename': 'profile.jpg',
     'validation': 'images'
 })`,
-        deleteFile: `supabase_service.delete({
+    deleteFile: `supabase_service.delete({
     'file_url': 'https://...supabase.co/storage/v1/object/public/avatars/old.jpg'
 })`,
-        download: `signed_data = supabase_service.download({
+    download: `# Get signed URL for download
+signed_data = supabase_service.download({
     'filename': 'private-image.jpg',
-    'expires_in': 3600
+    'expires_in': 3600 # 1 hour
 })
 download_url = signed_data['download_url']`,
-        listBuckets: `buckets = supabase_service.list_buckets()
+    listBuckets: `buckets = supabase_service.list_buckets()
 for bucket in buckets:
     print(bucket['name'])`,
-        webhookAuto: `url = supabase_service.upload(content, {
+    webhookAuto: `url = supabase_service.upload(content, {
     'filename': 'report.jpg',
     'webhook': {
         'url': 'https://api.myapp.com/hooks/upload',
@@ -852,7 +868,7 @@ for bucket in buckets:
         'metadata': {'user_id': 123}
     }
 })`,
-        webhookManual: `url = supabase_service.upload(content, {
+    webhookManual: `url = supabase_service.upload(content, {
     'filename': 'invoice.pdf',
     'webhook': {
         'url': 'https://api.myapp.com/hooks/upload',
@@ -860,13 +876,13 @@ for bucket in buckets:
         'auto_confirm': False
     }
 })`,
-        cancellation: `# In a background task (e.g., Celery)
+    cancellation: `# In a background task (e.g., Celery)
 # You would typically rely on task revocation
 pass`
-    },
+  },
 
-    fastapi: {
-        setup: `from fastapi import FastAPI, UploadFile, Depends
+  fastapi: {
+    setup: `from fastapi import FastAPI, UploadFile, Depends
 from obitox import ObitoX
 import os
 from functools import lru_cache
@@ -884,7 +900,7 @@ def get_supabase_service():
         'token': os.getenv("SUPABASE_KEY"),
         'bucket': "avatars"
     })`,
-        basicUpload: `@app.post("/upload")
+    basicUpload: `@app.post("/upload")
 async def upload_file(file: UploadFile, supabase=Depends(get_supabase_service)):
     content = await file.read()
     
@@ -894,7 +910,7 @@ async def upload_file(file: UploadFile, supabase=Depends(get_supabase_service)):
     })
     
     return {"url": url}`,
-        progressTracking: `async def progress_handler(percent, uploaded, total):
+    progressTracking: `async def progress_handler(percent, uploaded, total):
     print(f"Progress: {percent}%")
 
 @app.post("/upload-progress")
@@ -905,7 +921,7 @@ async def upload_with_progress(file: UploadFile, supabase=Depends(get_supabase_s
         'on_progress': progress_handler
     })
     return {"url": url}`,
-        privateUpload: `@app.post("/private-upload")
+    privateUpload: `@app.post("/private-upload")
 async def private_upload(file: UploadFile):
     # Initialize separate client or override bucket
     private_client = ObitoX(...).supabase({
@@ -915,30 +931,31 @@ async def private_upload(file: UploadFile):
     content = await file.read()
     url = private_client.upload(content, {'filename': 'secure.pdf'})
     return {"signed_url": url}`,
-        magicBytes: `url = supabase.upload(content, {
+    magicBytes: `url = supabase.upload(content, {
     'filename': 'avatar.png',
     'validation': 'images'
 })`,
-        deleteFile: `supabase.delete({
+    deleteFile: `supabase.delete({
     'file_url': 'https://.../old-image.png'
 })`,
-        download: `@app.get("/download/{filename}")
+    download: `# Get signed URL for download
+@app.get("/download/{filename}")
 async def get_download_link(filename: str, supabase=Depends(get_supabase_service)):
     result = supabase.download({
         'filename': filename,
-        'expires_in': 3600
+        'expires_in': 3600 # 1 hour
     })
     return {"download_url": result['download_url']}`,
-        listBuckets: `buckets = supabase.list_buckets()
+    listBuckets: `buckets = supabase.list_buckets()
 return buckets`,
-        webhookAuto: `url = supabase.upload(content, {
+    webhookAuto: `url = supabase.upload(content, {
     'filename': 'report.pdf',
     'webhook': {
         'url': 'https://api.example.com/hooks',
         'trigger': 'auto'
     }
 })`,
-        webhookManual: `url = supabase.upload(content, {
+    webhookManual: `url = supabase.upload(content, {
     'filename': 'invoice.pdf',
     'webhook': {
         'url': 'https://api.example.com/hooks',
@@ -946,13 +963,13 @@ return buckets`,
         'secret': 'wh_secret_key'
     }
 })`,
-        cancellation: `import asyncio
+    cancellation: `import asyncio
 # Fastapi cancellation typically happens if client disconnects
 # Use request.is_disconnected() check loop for long processing`
-    },
+  },
 
-    php: {
-        setup: `<?php
+  php: {
+    setup: `<?php
 use ObitoX\\ObitoXClient;
 
 $client = new ObitoXClient([
@@ -965,39 +982,40 @@ $supabase = $client->supabase([
     'token' => getenv('SUPABASE_KEY'),
     'bucket' => 'avatars'
 ]);`,
-        basicUpload: `$url = $supabase->upload($file, [
+    basicUpload: `$url = $supabase->upload($file, [
     'filename' => 'photo.jpg'
 ]);`,
-        progressTracking: `$url = $supabase->upload($file, [
+    progressTracking: `$url = $supabase->upload($file, [
     'filename' => 'video.mp4',
     'on_progress' => function($p) { echo $p; }
 ]);`,
-        privateUpload: `$private = $client->supabase(['bucket' => 'private']);
+    privateUpload: `$private = $client->supabase(['bucket' => 'private']);
 $url = $private->upload($file, ['filename' => 'doc.pdf']);`,
-        magicBytes: `$url = $supabase->upload($file, [
+    magicBytes: `$url = $supabase->upload($file, [
     'filename' => 'photo.jpg',
     'validation' => 'images'
 ]);`,
-        deleteFile: `$supabase->delete(['file_url' => $url]);`,
-        download: `$res = $supabase->download([
+    deleteFile: `$supabase->delete(['file_url' => $url]);`,
+    download: `// Get signed URL for download
+$res = $supabase->download([
     'filename' => 'photo.jpg',
-    'expires_in' => 3600
+    'expires_in' => 3600 // 1 hour
 ]);
 echo $res['download_url'];`,
-        listBuckets: `$buckets = $supabase->listBuckets();`,
-        webhookAuto: `$url = $supabase->upload($file, [
+    listBuckets: `$buckets = $supabase->listBuckets();`,
+    webhookAuto: `$url = $supabase->upload($file, [
     'filename' => 'report.jpg',
     'webhook' => ['url' => '...', 'trigger' => 'auto']
 ]);`,
-        webhookManual: `$url = $supabase->upload($file, [
+    webhookManual: `$url = $supabase->upload($file, [
     'filename' => 'invoice.jpg',
     'webhook' => ['url' => '...', 'trigger' => 'manual']
 ]);`,
-        cancellation: `// PHP timeout handling`
-    },
+    cancellation: `// PHP timeout handling`
+  },
 
-    laravel: {
-        setup: `// config/services.php
+  laravel: {
+    setup: `// config/services.php
 'obitox' => [
     'key' => env('OBITOX_API_KEY'),
     'secret' => env('OBITOX_API_SECRET'),
@@ -1024,7 +1042,7 @@ public function register()
         ]);
     });
 }`,
-        basicUpload: `public function upload(Request $request) {
+    basicUpload: `public function upload(Request $request) {
     if (!$request->hasFile('file')) {
         return response()->json(['error' => 'No file'], 400);
     }
@@ -1039,14 +1057,14 @@ public function register()
 
     return response()->json(['url' => $url]);
 }`,
-        progressTracking: `$url = $supabase->upload($fileContent, [
+    progressTracking: `$url = $supabase->upload($fileContent, [
     'filename' => 'large-video.mp4',
     'on_progress' => function($percent, $uploaded, $total) {
         // Log progress or update cache/db
         Log::info("Upload Progress: {$percent}%");
     }
 ]);`,
-        privateUpload: `// Create a temporary client for private bucket
+    privateUpload: `// Create a temporary client for private bucket
 $private = $client->supabase([
     'bucket' => 'private-docs',
     'url' => config('services.supabase.url'),
@@ -1056,23 +1074,24 @@ $private = $client->supabase([
 $signedUrl = $private->upload($fileContent, [
     'filename' => 'confidential.pdf'
 ]);`,
-        magicBytes: `$url = $supabase->upload($fileContent, [
+    magicBytes: `$url = $supabase->upload($fileContent, [
     'filename' => 'profile-pic.png',
     'validation' => 'images' // Restricts to valid image headers
 ]);`,
-        deleteFile: `$supabase->delete([
+    deleteFile: `$supabase->delete([
     'file_url' => 'https://...supabase.co/.../old-file.jpg'
 ]);`,
-        download: `$result = $supabase->download([
+    download: `// Get signed URL for download
+$result = $supabase->download([
     'filename' => 'private-report.pdf',
     'expires_in' => 3600 // 1 hour
 ]);
 return redirect($result['download_url']);`,
-        listBuckets: `$buckets = $supabase->listBuckets();
+    listBuckets: `$buckets = $supabase->listBuckets();
 foreach ($buckets as $bucket) {
     Log::info("Bucket: " . $bucket['name']);
 }`,
-        webhookAuto: `$url = $supabase->upload($content, [
+    webhookAuto: `$url = $supabase->upload($content, [
     'filename' => 'report.csv',
     'webhook' => [
         'url' => route('webhooks.upload'),
@@ -1080,7 +1099,7 @@ foreach ($buckets as $bucket) {
         'metadata' => ['batch_id' => 99]
     ]
 ]);`,
-        webhookManual: `$url = $supabase->upload($content, [
+    webhookManual: `$url = $supabase->upload($content, [
     'filename' => 'invoice.pdf',
     'webhook' => [
         'url' => route('webhooks.upload'),
@@ -1088,16 +1107,16 @@ foreach ($buckets as $bucket) {
         'secret' => config('services.webhook.secret')
     ]
 ]);`,
-        cancellation: `// PHP scripts are synchronous, but you can set timeouts
+    cancellation: `// PHP scripts are synchronous, but you can set timeouts
 try {
     $url = $supabase->upload($content, ['timeout' => 10]);
 } catch (\\Exception $e) {
     return response()->json(['error' => 'Upload timed out'], 504);
 }`
-    },
+  },
 
-    go: {
-        setup: `package main
+  go: {
+    setup: `package main
 
 import (
     "os"
@@ -1120,7 +1139,7 @@ func main() {
     
     // Use supabase instance...
 }`,
-        basicUpload: `file, _ := os.Open("photo.jpg")
+    basicUpload: `file, _ := os.Open("photo.jpg")
 defer file.Close()
 
 url, err := supabase.Upload(file, obitox.UploadOptions{
@@ -1132,13 +1151,13 @@ if err != nil {
     log.Fatal(err)
 }
 fmt.Println("Uploaded:", url)`,
-        progressTracking: `url, err := supabase.Upload(file, obitox.UploadOptions{
+    progressTracking: `url, err := supabase.Upload(file, obitox.UploadOptions{
     Filename: "video.mp4",
     OnProgress: func(percent float64, uploaded, total int64) {
         fmt.Printf("Progress: %.1f%%\n", percent)
     },
 })`,
-        privateUpload: `// Create separate client instance or just re-init bucket
+    privateUpload: `// Create separate client instance or just re-init bucket
 private := client.Supabase(obitox.SupabaseConfig{
     Url:    os.Getenv("SUPABASE_URL"),
     Token:  os.Getenv("SUPABASE_KEY"),
@@ -1148,32 +1167,33 @@ private := client.Supabase(obitox.SupabaseConfig{
 url, err := private.Upload(file, obitox.UploadOptions{
     Filename: "contract.pdf",
 })`,
-        magicBytes: `url, err := supabase.Upload(file, obitox.UploadOptions{
+    magicBytes: `url, err := supabase.Upload(file, obitox.UploadOptions{
     Filename:   "avatar.png",
     Validation: "images", // SDK checks magic bytes
 })`,
-        deleteFile: `err := supabase.Delete(obitox.DeleteOptions{
+    deleteFile: `err := supabase.Delete(obitox.DeleteOptions{
     FileUrl: "https://...supabase.co/.../old-image.jpg",
 })`,
-        download: `result, err := supabase.Download(obitox.DownloadOptions{
+    download: `// Get signed URL for download
+result, err := supabase.Download(obitox.DownloadOptions{
     Filename:  "secure-report.pdf",
     ExpiresIn: 3600, // 1 hour
 })
 if err == nil {
     fmt.Println("Signed URL:", result.DownloadUrl)
 }`,
-        listBuckets: `buckets, err := supabase.ListBuckets()
+    listBuckets: `buckets, err := supabase.ListBuckets()
 for _, b := range buckets {
     fmt.Println(b.Name)
 }`,
-        webhookAuto: `url, err := supabase.Upload(file, obitox.UploadOptions{
+    webhookAuto: `url, err := supabase.Upload(file, obitox.UploadOptions{
     Filename: "report.csv",
     Webhook: &obitox.WebhookConfig{
         Url:     "https://api.myapp.com/hooks/upload",
         Trigger: "auto",
     },
 })`,
-        webhookManual: `url, err := supabase.Upload(file, obitox.UploadOptions{
+    webhookManual: `url, err := supabase.Upload(file, obitox.UploadOptions{
     Filename: "invoice.pdf",
     Webhook: &obitox.WebhookConfig{
         Url:     "https://api.myapp.com/hooks/upload",
@@ -1181,7 +1201,7 @@ for _, b := range buckets {
         Secret:  "wh_secret_123",
     },
 })`,
-        cancellation: `ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+    cancellation: `ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 defer cancel()
 
 url, err := supabase.UploadWithContext(ctx, file, obitox.UploadOptions{
@@ -1190,5 +1210,5 @@ url, err := supabase.UploadWithContext(ctx, file, obitox.UploadOptions{
 if err != nil {
     fmt.Println("Upload failed or timed out:", err)
 }`
-    }
+  }
 };
